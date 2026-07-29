@@ -1,0 +1,675 @@
+/* Editor — styles using AdminThemeUikit CSS variables only */
+
+/* ------------------------------------------------------------------ */
+/*  Layout                                                              */
+/* ------------------------------------------------------------------ */
+
+#fe-wrap {
+	display: flex;
+	height: calc(100vh - 160px);
+	min-height: 500px;
+	border: 1px solid var(--pw-border-color);
+	border-radius: 3px;
+	overflow: hidden;
+	background: var(--pw-blocks-background);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar                                                             */
+/* ------------------------------------------------------------------ */
+
+#fe-sidebar {
+	width: 260px;
+	min-width: 160px;
+	background: var(--pw-inputs-background);
+	border-right: 1px solid var(--pw-border-color);
+	overflow-y: auto;
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+#fe-tree {
+	flex: 1;
+	padding: 6px 0;
+	font-size: 13px;
+	color: var(--pw-text-color);
+}
+
+#fe-tree ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+#fe-tree li {
+	margin: 0;
+	padding: 0;
+}
+
+.fe-tree-root > li {
+	border-bottom: 1px solid var(--pw-border-color);
+}
+
+/* ── Heroicons base ─────────────────────────────────────────────── */
+
+.fe-icon {
+	display: inline-block;
+	flex-shrink: 0;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+}
+
+.fe-placeholder-icon {
+	width: 48px;
+	height: 48px;
+	opacity: .3;
+}
+
+.fe-dir-label,
+.fe-file-label {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 5px 10px;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--pw-text-color);
+	transition: background 0.1s, color 0.1s;
+}
+
+.fe-dir-label:hover,
+.fe-file-label:hover {
+	background: var(--pw-menu-item-background-hover);
+}
+
+.fe-file-label.active {
+	background: var(--pw-main-color);
+	color: #fff;
+}
+
+.fe-file-label.active .fe-icon {
+	color: #fff;
+}
+
+.fe-dir-label .fe-icon,
+.fe-file-label .fe-icon {
+	width: 14px;
+	flex-shrink: 0;
+	color: var(--pw-muted-color);
+}
+
+.fe-root > .fe-dir-label {
+	font-weight: 700;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: .06em;
+	color: var(--pw-muted-color);
+}
+
+.fe-children {
+	padding-left: 16px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Context menu                                                        */
+/* ------------------------------------------------------------------ */
+
+#fe-ctx-menu {
+	position: fixed;
+	z-index: 9999;
+	background: var(--pw-blocks-background);
+	border: 1px solid var(--pw-border-color);
+	border-radius: 3px;
+	box-shadow: 0 4px 16px rgba(0,0,0,.18);
+	min-width: 168px;
+	font-size: 13px;
+	overflow: hidden;
+}
+
+#fe-ctx-menu .fe-ctx-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 14px;
+	cursor: pointer;
+	color: var(--pw-text-color);
+	transition: background 0.1s;
+}
+
+#fe-ctx-menu .fe-ctx-item:hover {
+	background: var(--pw-menu-item-background-hover);
+}
+
+#fe-ctx-menu .fe-ctx-item .fe-icon {
+	color: var(--pw-muted-color);
+}
+
+#fe-ctx-menu .fe-ctx-item.danger {
+	color: var(--pw-error-inline-text-color);
+}
+
+#fe-ctx-menu .fe-ctx-item.danger .fe-icon {
+	color: var(--pw-error-inline-text-color);
+}
+
+#fe-ctx-menu hr {
+	border: none;
+	border-top: 1px solid var(--pw-border-color);
+	margin: 4px 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main panel                                                          */
+/* ------------------------------------------------------------------ */
+
+#fe-main {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: var(--pw-blocks-background);
+}
+
+#fe-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	background: var(--pw-inputs-background);
+	border-bottom: 1px solid var(--pw-border-color);
+	flex-shrink: 0;
+}
+
+#fe-filename {
+	flex: 1;
+	font-size: 12px;
+	font-family: monospace;
+	color: var(--pw-muted-color);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#fe-editor-wrap {
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+#fe-editor-wrap .CodeMirror {
+	flex: 1;
+	height: 100%;
+	font-size: 13px;
+	font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+	line-height: 1.55;
+	border-radius: 0;
+}
+
+#fe-editor-wrap .CodeMirror-scroll {
+	height: 100%;
+}
+
+#fe-placeholder {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	color: var(--pw-muted-color);
+}
+
+#fe-placeholder .fe-icon {
+	opacity: .35;
+}
+
+#fe-placeholder p {
+	font-size: 14px;
+	margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Utility                                                             */
+/* ------------------------------------------------------------------ */
+
+.fe-hidden { display: none !important; }
+
+/* ------------------------------------------------------------------ */
+/*  Notifications                                                       */
+/* ------------------------------------------------------------------ */
+
+/* Notification stack — top right */
+#fe-notices {
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	z-index: 9999;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-width: 340px;
+	pointer-events: none;
+}
+
+.fe-notice {
+	pointer-events: auto;
+	padding: 10px 14px;
+	border-radius: 3px;
+	font-size: 13px;
+	box-shadow: 0 4px 14px rgba(0,0,0,.18);
+	animation: fe-fadein .18s ease;
+	color: var(--pw-text-color);
+	background: var(--pw-blocks-background);
+	border: 1px solid var(--pw-border-color);
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	line-height: 1.4;
+}
+
+.fe-notice.ok   { background: var(--pw-alert-success); }
+.fe-notice.err  { background: var(--pw-alert-danger);  }
+.fe-notice.info { background: var(--pw-alert-primary); }
+
+@keyframes fe-fadein {
+	from { opacity: 0; transform: translateY(-6px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Modal                                                               */
+/* ------------------------------------------------------------------ */
+
+.fe-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: var(--pw-modal-color);
+	z-index: 9990;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.fe-modal {
+	background: var(--pw-blocks-background);
+	border: 1px solid var(--pw-border-color);
+	border-radius: 3px;
+	padding: 24px 28px;
+	min-width: 320px;
+	box-shadow: 0 8px 32px rgba(0,0,0,.22);
+}
+
+.fe-modal h3 {
+	margin: 0 0 14px;
+	font-size: 15px;
+	color: var(--pw-text-color);
+}
+
+.fe-modal input[type="text"] {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.fe-modal .fe-modal-actions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	margin-top: 16px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar actions bar                                                 */
+/* ------------------------------------------------------------------ */
+
+#fe-sidebar-actions {
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--pw-border-color);
+	background: var(--pw-inputs-background);
+	flex-shrink: 0;
+	display: flex;
+	gap: 6px;
+}
+
+#fe-sidebar-actions .uk-button {
+	flex: 1;
+	font-size: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+/* Drag-and-drop highlight */
+#fe-sidebar.fe-drop-active {
+	outline: 2px dashed var(--pw-main-color);
+	outline-offset: -3px;
+	background: color-mix(in srgb, var(--pw-main-color) 8%, var(--pw-inputs-background));
+}
+
+/* Upload progress in sidebar */
+#fe-upload-progress {
+	padding: 6px 10px;
+	font-size: 12px;
+	color: var(--pw-muted-color);
+	border-bottom: 1px solid var(--pw-border-color);
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Tree: chevrons, indentation                                        */
+/* ------------------------------------------------------------------ */
+
+/* Fixed-width spacer so file names align with folder names */
+.fe-chev-spacer {
+	display: inline-block;
+	width: 14px;
+	flex-shrink: 0;
+}
+
+/* Chevron icon */
+.fe-chevron {
+	flex-shrink: 0;
+	transition: transform 0.15s ease;
+	color: var(--pw-muted-color) !important;
+}
+
+.fe-chevron-open {
+	transform: rotate(90deg);
+}
+
+/* Item (file/folder) icon */
+.fe-item-icon {
+	flex-shrink: 0;
+	color: var(--pw-muted-color);
+}
+
+.fe-file-label.active .fe-item-icon,
+.fe-file-label.active .fe-chev-spacer {
+	color: #fff;
+}
+
+/* Indent spacer */
+.fe-indent {
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+/* Loading placeholder */
+.fe-loading {
+	padding: 6px 10px;
+	font-size: 12px;
+	color: var(--pw-muted-color);
+}
+
+/* Root nodes: no gap needed since chevrons handle indentation */
+.fe-tree-root .fe-children {
+	padding-left: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Root picker modal                                                   */
+/* ------------------------------------------------------------------ */
+
+.fe-root-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-bottom: 4px;
+}
+
+.fe-root-picker .fe-root-btn {
+	width: 100%;
+	text-align: left;
+	font-family: monospace;
+	font-size: 12px;
+}
+
+/* ================================================================== */
+/*  Responsive — mobile (< 768px)                                      */
+/* ================================================================== */
+
+@media (max-width: 767px) {
+
+	/* Full-height, stacked layout */
+	#fe-wrap {
+		flex-direction: column;
+		height: auto;
+		min-height: 0;
+		border-left: none;
+		border-right: none;
+		border-radius: 0;
+	}
+
+	/* Sidebar takes full width, fixed height */
+	#fe-sidebar {
+		width: 100%;
+		min-width: 0;
+		border-right: none;
+		border-bottom: 1px solid var(--pw-border-color);
+		max-height: 100vh;
+		transition: max-height 0.25s ease, opacity 0.2s ease;
+		opacity: 1;
+		flex-shrink: 0;
+	}
+
+	/* When editor is open, hide sidebar (slide up) */
+	#fe-wrap.fe-editor-open #fe-sidebar {
+		max-height: 0;
+		opacity: 0;
+		overflow: hidden;
+		border-bottom: none;
+	}
+
+	/* Main panel hidden by default on mobile */
+	#fe-main {
+		display: none;
+	}
+
+	/* fe-editor-open: show inline (JS moves #fe-main to body) */
+	#fe-wrap.fe-editor-open #fe-main {
+		display: flex;
+	}
+
+	/* CodeMirror fills everything below toolbar */
+	#fe-wrap.fe-editor-open #fe-editor-wrap {
+		flex: 1;
+		overflow: hidden;
+	}
+	#fe-wrap.fe-editor-open #fe-editor-wrap .CodeMirror,
+	#fe-wrap.fe-editor-open #fe-editor-wrap .CodeMirror-scroll {
+		height: 100%;
+	}
+
+	/* Toolbar: back button + filename + save */
+	#fe-toolbar {
+		padding: 8px 10px;
+		gap: 8px;
+	}
+
+	#fe-toolbar #fe-back {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		flex-shrink: 0;
+	}
+
+	#fe-filename {
+		font-size: 11px;
+	}
+
+	/* Editor fills screen below toolbar */
+	#fe-editor-wrap .CodeMirror {
+		font-size: 12px;
+	}
+
+	/* Sidebar actions: full-width button */
+	#fe-sidebar-actions .uk-button {
+		font-size: 13px;
+	}
+
+	/* Context menu: slightly larger tap targets */
+	#fe-ctx-menu .fe-ctx-item {
+		padding: 11px 16px;
+		font-size: 14px;
+	}
+
+	/* Notifications: full width on mobile */
+	#fe-notices {
+		left: 12px;
+		right: 12px;
+		top: 12px;
+		max-width: none;
+	}
+
+	/* Modal: full width */
+	.fe-modal {
+		min-width: 0;
+		width: calc(100vw - 40px);
+	}
+
+	/* Root picker */
+	.fe-root-picker .fe-root-btn {
+		font-size: 13px;
+		padding: 10px 14px;
+	}
+}
+
+/* Back button — hidden on desktop */
+#fe-back {
+	display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Binary / image preview                                              */
+/* ------------------------------------------------------------------ */
+
+#fe-binary-preview {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: auto;
+	padding: 20px;
+	background: var(--pw-blocks-background);
+}
+
+.fe-preview-img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	border-radius: 3px;
+	box-shadow: 0 2px 16px rgba(0,0,0,.15);
+}
+
+.fe-preview-info {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	color: var(--pw-muted-color);
+	text-align: center;
+}
+
+.fe-preview-info .fe-icon {
+	width: 48px;
+	height: 48px;
+	opacity: .4;
+}
+
+.fe-preview-info p {
+	margin: 0;
+	font-size: 14px;
+}
+
+.fe-preview-size {
+	font-size: 12px !important;
+	color: var(--pw-muted-color);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Upload progress bar                                                 */
+/* ------------------------------------------------------------------ */
+
+#fe-upload-progress-wrap {
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--pw-border-color);
+	background: var(--pw-inputs-background);
+	flex-shrink: 0;
+	order: -1;
+}
+
+#fe-upload-label {
+	font-size: 11px;
+	color: var(--pw-muted-color);
+	margin-bottom: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#fe-upload-bar-wrap {
+	height: 4px;
+	background: var(--pw-border-color);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+#fe-upload-bar {
+	height: 100%;
+	width: 0;
+	background: var(--pw-main-color);
+	border-radius: 2px;
+	transition: width 0.15s ease;
+}
+
+/* Checkerboard for transparent images */
+.fe-preview-transparent {
+	background-image:
+		linear-gradient(45deg, #ccc 25%, transparent 25%),
+		linear-gradient(-45deg, #ccc 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, #ccc 75%),
+		linear-gradient(-45deg, transparent 75%, #ccc 75%);
+	background-size: 16px 16px;
+	background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+	background-color: #fff;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile editor overlay (appended to body by JS)                     */
+/* ------------------------------------------------------------------ */
+
+#fe-mobile-overlay {
+	display: flex;
+	flex-direction: column;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 99999;
+	background: var(--pw-blocks-background);
+	width: 100%;
+	height: 100%;
+}
+
+#fe-mobile-overlay #fe-editor-wrap {
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+#fe-mobile-overlay #fe-editor-wrap .CodeMirror,
+#fe-mobile-overlay #fe-editor-wrap .CodeMirror-scroll {
+	height: 100%;
+}

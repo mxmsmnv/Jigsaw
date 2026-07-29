@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php namespace ProcessWire;
+
+$argv = $_SERVER['argv'] ?? [];
+$root = null;
+
+foreach ($argv as $index => $arg) {
+	if (strpos((string)$arg, '--root=') === 0) {
+		$root = substr((string)$arg, 7);
+		unset($argv[$index]);
+	}
+}
+
+$root = $root ?: getcwd();
+$root = pdb_find_root((string)$root);
+
+if (!$root) {
+	fwrite(STDERR, "Error: ProcessWire root not found. Pass --root=/path/to/processwire.\n");
+	exit(1);
+}
+
+require $root . '/index.php';
+
+$module = wire('modules')->getModule('ProcessDbBackup', ['noPermissionCheck' => true]);
+if (!$module instanceof ProcessDbBackup) {
+	fwrite(STDERR, "Error: ProcessDbBackup module is not installed.\n");
+	exit(1);
+}
+
+exit($module->runCli(array_values($argv)));
+
+function pdb_find_root(string $path): ?string {
+	$candidates = [
+		$path,
+		getcwd(),
+		dirname(__DIR__, 4),
+		dirname(__DIR__, 5),
+	];
+
+	foreach ($candidates as $candidate) {
+		$real = realpath((string)$candidate);
+		if (!$real) continue;
+		$found = pdb_walk_root($real);
+		if ($found) return $found;
+	}
+
+	return null;
+}
+
+function pdb_walk_root(string $path): ?string {
+	$current = rtrim($path, '/');
+	while ($current && $current !== '/') {
+		if (is_file($current . '/index.php') && is_dir($current . '/wire') && is_dir($current . '/site')) {
+			return $current;
+		}
+		$current = dirname($current);
+	}
+	return null;
+}

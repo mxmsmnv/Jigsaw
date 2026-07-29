@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "generated": "2026-07-29",
+  "components": [
+    {
+      "name": "ProcessDbBackup",
+      "repository": "mxmsmnv/ProcessDbBackup",
+      "branch": "dev",
+      "commit": "d031e0bc59622d5cc47da654525e8b27eef4750a"
+    },
+    {
+      "name": "Editor",
+      "repository": "mxmsmnv/Editor",
+      "branch": "main",
+      "commit": "78eb9a47ea44f9666ab2dabfa642060050de47f9"
+    },
+    {
+      "name": "AdminBar",
+      "repository": "mxmsmnv/AdminBar",
+      "branch": "main",
+      "commit": "2b10199f5e6e199731dfb4b72fe51db4cc60d282"
+    },
+    {
+      "name": "Uninstaller",
+      "repository": "mxmsmnv/Uninstaller",
+      "branch": "main",
+      "commit": "d6b393daf8222d9bdc87561f7cc22da413b188b9"
+    },
+    {
+      "name": "WireAnnouncementBar",
+      "repository": "mxmsmnv/WireAnnouncementBar",
+      "branch": "main",
+      "commit": "d778f9c85e292a9f5faa1ab7aff8e55d31b075a1"
+    },
+    {
+      "name": "ProcessSsl",
+      "repository": "mxmsmnv/ProcessSsl",
+      "branch": "main",
+      "commit": "35dd667930285b9e54d32905d79359478e2d212a"
+    },
+    {
+      "name": "LanguageAccessManager",
+      "repository": "mxmsmnv/LanguageAccessManager",
+      "branch": "main",
+      "commit": "4e39ea8c52ee5fec18914493ebcbc09564c6ba67"
+    },
+    {
+      "name": "WarmUp",
+      "repository": "mxmsmnv/WarmUp",
+      "branch": "main",
+      "commit": "fe22d05769514bca29126123adeb84bc07579821"
+    },
+    {
+      "name": "ProcessFieldAudit",
+      "repository": "mxmsmnv/ProcessFieldAudit",
+      "branch": "main",
+      "commit": "7c42250984a0966bf72a0af385d61462604e4616"
+    },
+    {
+      "name": "Context",
+      "repository": "mxmsmnv/Context",
+      "branch": "main",
+      "commit": "170e69d117d5d18c244c5a511896e669ecbfe18f"
+    }
+  ]
+}

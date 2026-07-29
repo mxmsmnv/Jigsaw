@@ -1,0 +1,70 @@
+.ssl-manager {
+    --ssl-text: var(--pw-text-color, #111);
+    --ssl-muted: var(--pw-muted-color, rgba(0,0,0,0.55));
+    --ssl-border: var(--pw-border-color, rgba(0,0,0,0.16));
+    --ssl-accent: var(--pw-main-color, #3b82f6);
+    --ssl-success: var(--uk-label-success-background, #32d296);
+    --ssl-warning: var(--uk-label-warning-background, #faa05a);
+    --ssl-danger: var(--uk-label-danger-background, #f0506e);
+    color: var(--ssl-text);
+}
+
+.ssl-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 22px; }
+
+.ssl-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin: 10px 0 24px;
+}
+.ssl-stat-card { text-align: center; }
+.ssl-stat-label { font-size: 12px; color: var(--ssl-muted); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; }
+.ssl-stat-value { font-size: 30px; font-weight: 700; line-height: 1.1; }
+.ssl-ok { color: var(--ssl-success); }
+.ssl-warn { color: var(--ssl-warning); }
+.ssl-danger { color: var(--ssl-danger); }
+
+.ssl-table-panel { margin-top: 10px; }
+table.ssl-table thead th.ssl-sortable { cursor: pointer; user-select: none; -webkit-user-select: none; white-space: nowrap; }
+table.ssl-table thead th .ssl-arrow { color: var(--ssl-accent); font-size: 11px; }
+table.ssl-table td .ssl-checked { white-space: nowrap; }
+.ssl-delete { color: var(--ssl-danger); }
+.ssl-delete:hover { opacity: .7; }
+
+.ssl-info {
+    border: 1px solid var(--pw-border-color, #e5e7eb);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+}
+.ssl-info-warn { background: var(--pw-alert-warning, #fff0be); border-color: var(--pw-alert-warning-border, #fde68a); }
+.ssl-match-ok { border-left: 4px solid var(--ssl-success); }
+.ssl-match-bad { border-left: 4px solid var(--ssl-danger); }
+.ssl-check-table { max-width: 560px; }
+.ssl-check-table td:first-child { color: var(--ssl-muted); width: 200px; }
+
+.ssl-pem {
+    width: 100%;
+    min-height: 220px;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre;
+}
+
+.ssl-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ssl-border);
+    text-align: left;
+}
+.ssl-settings-link {
+    color: var(--ssl-muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: .04em;
+}
+.ssl-settings-link:hover { color: var(--ssl-text); }
+
+@media (max-width: 768px) {
+    .ssl-stats-grid { grid-template-columns: 1fr 1fr; }
+}
