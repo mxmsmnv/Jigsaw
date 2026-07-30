@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated": "2026-07-29",
+  "generated": "2026-07-30",
   "components": [
     {
       "name": "ProcessDbBackup",
@@ -55,12 +55,15 @@
       "repository": "mxmsmnv/ProcessFieldAudit",
       "branch": "main",
       "commit": "7c42250984a0966bf72a0af385d61462604e4616"
-    },
+    }
+  ],
+  "merged_sources": [
     {
       "name": "Context",
       "repository": "mxmsmnv/Context",
       "branch": "main",
-      "commit": "170e69d117d5d18c244c5a511896e669ecbfe18f"
+      "commit": "170e69d117d5d18c244c5a511896e669ecbfe18f",
+      "destination": "Jigsaw core and src/Context"
     }
   ]
 }

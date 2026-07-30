@@ -1,7 +1,7 @@
 <?php namespace ProcessWire;
 
 /**
- * Context Module - Snippets Templates Library
+ * Jigsaw Context - Snippets Templates Library
  * 
  * This file contains all code snippet templates for different site types.
  * Edit this file to customize or add new snippet patterns.

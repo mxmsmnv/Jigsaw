@@ -1,16 +1,16 @@
 <?php namespace ProcessWire;
 
 /**
- * Context Module - content sample serializer
+ * Jigsaw Context - content sample serializer
  *
  * Normalizes ProcessWire field values for exported AI context samples.
  */
 class ContextSampleSerializer {
 
-    /** @var Context */
+    /** @var Jigsaw */
     protected $module;
 
-    public function __construct(Context $module) {
+    public function __construct(Jigsaw $module) {
         $this->module = $module;
     }
 
@@ -56,7 +56,7 @@ class ContextSampleSerializer {
         $className = $field->type->className();
         if(stripos($className, 'password') !== false) return true;
 
-        $defaults = Context::getConfigDefaults();
+        $defaults = Jigsaw::getConfigDefaults();
         $denylist = $this->module->sample_field_denylist ?: $defaults['sample_field_denylist'];
         $tokens = array_filter(array_map('trim', explode(',', strtolower($denylist))));
         $haystack = strtolower($field->name . ' ' . $field->label . ' ' . $field->description . ' ' . $field->notes);

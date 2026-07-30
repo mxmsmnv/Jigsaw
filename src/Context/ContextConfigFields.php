@@ -9,7 +9,12 @@ class ContextConfigFields {
         $modules = wire('modules');
         $inputfields = new InputfieldWrapper();
 
-        $data = array_merge(Context::getConfigDefaults(), $data);
+        $data = array_merge(Jigsaw::getConfigDefaults(), $data);
+
+        $f = $modules->get('InputfieldHidden');
+        $f->name = 'context_migration_complete';
+        $f->value = (int)($data['context_migration_complete'] ?? 0);
+        $inputfields->add($f);
 
         // ── Row 1: Site Type + CSS Framework (50/50) ──────────────────────────
         $f = $modules->get('InputfieldSelect');
@@ -62,7 +67,7 @@ class ContextConfigFields {
         $f->addOption('toon', 'TOON');
         $f->addOption('json', 'JSON');
         $f->addOption('csv', 'CSV');
-        $f->value = Context::normalizeStaticExportFormats($data['export_formats'] ?? null, $data['export_toon_format'] ?? 1);
+        $f->value = Jigsaw::normalizeStaticExportFormats($data['export_formats'] ?? null, $data['export_toon_format'] ?? 1);
         $f->columnWidth = 100;
         $fieldset->add($f);
 
@@ -258,9 +263,9 @@ class ContextConfigFields {
         $f = $modules->get('InputfieldMarkup');
         $f->name = 'ai_squad_settings';
         $f->label = 'Squad Gateway';
-        $f->value = '<p>Context will use the active key, default provider, and model configured in '
+        $f->value = '<p>Jigsaw will use the active key, default provider, and model configured in '
             . '<a href="' . wire('config')->urls->admin . 'module/edit?name=Squad">Squad settings</a>. '
-            . 'No provider credential is stored in Context.</p>';
+            . 'No provider credential is stored in Jigsaw.</p>';
         $f->showIf = 'ai_provider=squad, ai_enabled=1';
         $f->columnWidth = 100;
         $fieldset->add($f);
@@ -288,7 +293,7 @@ class ContextConfigFields {
 
 
         // Test connection button
-        $testUrl = rtrim(wire('config')->urls->admin, '/') . '/setup/context/ai-test/';
+        $testUrl = rtrim(wire('config')->urls->admin, '/') . '/setup/jigsaw/context-ai-test/';
         $csrfName = wire('session')->CSRF->getTokenName();
         $csrfValue = wire('session')->CSRF->getTokenValue();
         $f = $modules->get('InputfieldMarkup');

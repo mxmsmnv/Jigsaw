@@ -1,14 +1,14 @@
 <?php namespace ProcessWire;
 
 /**
- * CLI command runner for the Context module.
+ * CLI command runner for the Jigsaw Context.
  */
 class ContextCli {
 
-    /** @var Context */
+    /** @var Jigsaw */
     protected $module;
 
-    public function __construct(Context $module) {
+    public function __construct(Jigsaw $module) {
         $this->module = $module;
     }
 
@@ -89,7 +89,7 @@ class ContextCli {
     }
 
     protected function stats() {
-        echo "📊 Context Module Statistics\n";
+        echo "📊 Jigsaw Context Statistics\n";
         echo str_repeat('=', 60) . "\n\n";
 
         $templates = 0;
@@ -245,7 +245,7 @@ class ContextCli {
 
     protected function help() {
         echo "\n";
-        echo "ProcessWire Context Module - CLI Commands\n";
+        echo "ProcessWire Jigsaw Context - CLI Commands\n";
         echo str_repeat('=', 60) . "\n\n";
         echo "Usage:\n";
         echo "  php index.php --context-export [options]\n";

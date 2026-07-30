@@ -5,13 +5,13 @@
  */
 class ContextAdminActions {
 
-    /** @var Context */
+    /** @var Jigsaw */
     protected $module;
 
     /** @var callable */
     protected $call;
 
-    public function __construct(Context $module) {
+    public function __construct(Jigsaw $module) {
         $this->module = $module;
         $this->call = \Closure::bind(function($method, ...$args) {
             return $this->$method(...$args);
@@ -25,7 +25,7 @@ class ContextAdminActions {
             $this->invoke('requirePostCsrf');
         } catch(\Exception $e) {
             $this->module->error($e->getMessage());
-            $this->module->session->redirect($this->module->page->url);
+            $this->module->session->redirect($this->module->contextAdminUrl('context/'));
             return;
         }
 
@@ -45,7 +45,7 @@ class ContextAdminActions {
             $this->module->message("✅ Context successfully exported to: <strong>{$aiPath}</strong>");
             $this->module->message("⏱️ Export completed in {$duration} seconds");
             $this->module->log("Context exported successfully in {$duration}s");
-            $this->module->session->redirect($this->module->page->url);
+            $this->module->session->redirect($this->module->contextAdminUrl('context/'));
         } catch(\Exception $e) {
             $this->module->error("❌ Export failed: " . $e->getMessage());
             $this->module->log("Context export failed: " . $e->getMessage());

@@ -1,7 +1,7 @@
 <?php namespace ProcessWire;
 
 /**
- * Context - ProcessWire AI Context Exporter
+ * Jigsaw Context features
  * 
  * Full-featured module for exporting ProcessWire site structure
  * in a format optimized for working with AI assistants.
@@ -13,31 +13,9 @@
  * TOON format reduces token consumption by 30-60% for AI prompts.
  */
 
-class Context extends Process implements Module, ConfigurableModule {
+trait JigsawContextFeatures {
 
-    const VERSION = '2.1.0';
-
-    public static function getModuleInfo() {
-        return [
-            'title' => 'Context', 
-            'version' => 210,
-            'summary' => 'Export ProcessWire site context for AI development (JSON + TOON formats)',
-            'author' => 'Maxim Semenov',
-            'href'     => 'https://smnv.org',
-            'icon' => 'code',
-            'permissions' => [
-                'context-admin' => 'Administer Context exports and AI gateway'
-            ],
-            'page' => [
-                'name' => 'context',
-                'parent' => 'setup',
-                'title' => 'Context'
-            ],
-            'requires' => 'ProcessWire>=3.0',
-            'autoload' => true,
-            'singular' => true
-        ];
-    }
+    public const CONTEXT_VERSION = '2.1.0';
 
     // Default module settings
     protected static $configDefaults = [
@@ -73,7 +51,8 @@ class Context extends Process implements Module, ConfigurableModule {
         'ai_system_prompt'   => '',
         'ai_site_url'        => '',
         'ai_site_name'       => '',
-        'ai_custom_endpoint' => ''
+        'ai_custom_endpoint' => '',
+        'context_migration_complete' => 0
     ];
 
     /** Track whether static dependencies are loaded */
@@ -82,40 +61,40 @@ class Context extends Process implements Module, ConfigurableModule {
     protected static function loadDependencies() : void {
         if(self::$dependenciesLoaded) return;
 
-        require_once __DIR__ . '/src/ContextAI.php';
-        require_once __DIR__ . '/src/ContextToon.php';
-        require_once __DIR__ . '/src/ContextSampleSerializer.php';
-        require_once __DIR__ . '/src/ContextDashboard.php';
-        require_once __DIR__ . '/src/ContextExporter.php';
-        require_once __DIR__ . '/src/ContextConfigFields.php';
-        require_once __DIR__ . '/src/ContextCli.php';
-        require_once __DIR__ . '/src/ContextAutoUpdater.php';
-        require_once __DIR__ . '/src/ContextFilesystem.php';
-        require_once __DIR__ . '/src/ContextStructureExporter.php';
-        require_once __DIR__ . '/src/ContextTemplateExporter.php';
-        require_once __DIR__ . '/src/ContextSampleExporter.php';
-        require_once __DIR__ . '/src/ContextApiExporter.php';
-        require_once __DIR__ . '/src/ContextMetadataExporter.php';
-        require_once __DIR__ . '/src/ContextPromptExporter.php';
-        require_once __DIR__ . '/src/ContextPromptTemplates.php';
-        require_once __DIR__ . '/src/ContextIntegrationExporter.php';
-        require_once __DIR__ . '/src/ContextSystemExporter.php';
-        require_once __DIR__ . '/src/ContextDocsExporter.php';
-        require_once __DIR__ . '/src/ContextArchiveDownloader.php';
-        require_once __DIR__ . '/src/ContextAdminActions.php';
-        require_once __DIR__ . '/src/ContextFrontendDetector.php';
-        require_once __DIR__ . '/src/ContextAiTestAction.php';
-        require_once __DIR__ . '/src/ContextExportFormats.php';
-        require_once __DIR__ . '/src/ContextSiteInspector.php';
-        require_once __DIR__ . '/src/ContextWebHelper.php';
+        require_once __DIR__ . '/Context/ContextAI.php';
+        require_once __DIR__ . '/Context/ContextToon.php';
+        require_once __DIR__ . '/Context/ContextSampleSerializer.php';
+        require_once __DIR__ . '/Context/ContextDashboard.php';
+        require_once __DIR__ . '/Context/ContextExporter.php';
+        require_once __DIR__ . '/Context/ContextConfigFields.php';
+        require_once __DIR__ . '/Context/ContextCli.php';
+        require_once __DIR__ . '/Context/ContextAutoUpdater.php';
+        require_once __DIR__ . '/Context/ContextFilesystem.php';
+        require_once __DIR__ . '/Context/ContextStructureExporter.php';
+        require_once __DIR__ . '/Context/ContextTemplateExporter.php';
+        require_once __DIR__ . '/Context/ContextSampleExporter.php';
+        require_once __DIR__ . '/Context/ContextApiExporter.php';
+        require_once __DIR__ . '/Context/ContextMetadataExporter.php';
+        require_once __DIR__ . '/Context/ContextPromptExporter.php';
+        require_once __DIR__ . '/Context/ContextPromptTemplates.php';
+        require_once __DIR__ . '/Context/ContextIntegrationExporter.php';
+        require_once __DIR__ . '/Context/ContextSystemExporter.php';
+        require_once __DIR__ . '/Context/ContextDocsExporter.php';
+        require_once __DIR__ . '/Context/ContextArchiveDownloader.php';
+        require_once __DIR__ . '/Context/ContextAdminActions.php';
+        require_once __DIR__ . '/Context/ContextFrontendDetector.php';
+        require_once __DIR__ . '/Context/ContextAiTestAction.php';
+        require_once __DIR__ . '/Context/ContextExportFormats.php';
+        require_once __DIR__ . '/Context/ContextSiteInspector.php';
+        require_once __DIR__ . '/Context/ContextWebHelper.php';
 
         self::$dependenciesLoaded = true;
     }
 
     /**
-     * Constructor - apply default values
+     * Apply Context defaults from the Jigsaw constructor.
      */
-    public function __construct() {
+    protected function initializeContextFeatures(): void {
         self::loadDependencies();
         foreach(self::$configDefaults as $key => $value) {
             $this->$key = $value;
@@ -232,9 +211,11 @@ class Context extends Process implements Module, ConfigurableModule {
      */
     public function init() {
         parent::init();
+        $this->migrateLegacyContextConfig();
         $this->applyExportFormats();
         
-        // Register API variable
+        // Preserve the public Context API while Jigsaw becomes its owner.
+        $this->wire('jigsaw', $this);
         $this->wire('context', $this);
         $this->dispatchCliCommand();
         
@@ -279,9 +260,9 @@ class Context extends Process implements Module, ConfigurableModule {
 
     /**
      * AJAX endpoint: test AI gateway connection
-     * Called at /setup/context/ai-test/
+     * Called at /setup/jigsaw/context-ai-test/
      */
-    public function executeAiTest() {
+    protected function contextAiTest() {
         $this->aiTestAction()->execute();
     }
 
@@ -829,14 +810,14 @@ class Context extends Process implements Module, ConfigurableModule {
     /**
      * Download context folder as ZIP archive
      */
-    public function executeDownload() {
+    protected function contextDownload() {
         $this->archiveDownloader()->execute();
     }
 
     /**
      * Export context from the admin action route.
      */
-    public function executeExport() {
+    protected function contextExport() {
         $this->adminActions()->executeExport();
     }
 
@@ -878,7 +859,7 @@ class Context extends Process implements Module, ConfigurableModule {
     /**
      * Main module page
      */
-    public function execute() {
+    protected function renderContextDashboard() {
         $this->requireContextAccess();
 
         $contextPath = $this->getContextPath();
@@ -893,12 +874,43 @@ class Context extends Process implements Module, ConfigurableModule {
             'exists' => $exists,
             'inventory' => $inventory,
             'stats' => $this->getSiteStats(),
-            'settingsUrl' => $this->config->urls->admin . "module/edit?name=Context",
+            'settingsUrl' => $this->config->urls->admin . 'module/edit?name=Jigsaw',
+            'exportUrl' => $this->contextAdminUrl('context-export/'),
+            'downloadUrl' => $this->contextAdminUrl('context-download/'),
             'csrfInput' => $this->getCsrfInputMarkup(),
             'formatsLabel' => $this->exportFormatLabel($this->normalizeExportFormats()),
             'folderSize' => $folderSize,
             'lastModified' => $lastModified
         ]);
+    }
+
+    public function contextAdminUrl(string $action = ''): string {
+        $base = rtrim((string)$this->config->urls->admin, '/') . '/setup/jigsaw/';
+        return $base . ltrim($action, '/');
+    }
+
+    /**
+     * Import settings from the discontinued Context module once.
+     */
+    protected function migrateLegacyContextConfig(): bool {
+        if(!empty($this->context_migration_complete)) return false;
+
+        $modules = $this->wire('modules');
+        $legacy = (array)$modules->getConfig('Context');
+        $current = (array)$modules->getConfig('Jigsaw');
+
+        foreach(self::$configDefaults as $key => $default) {
+            if($key === 'context_migration_complete') continue;
+            if(array_key_exists($key, $legacy) && !array_key_exists($key, $current)) {
+                $current[$key] = $legacy[$key];
+                $this->$key = $legacy[$key];
+            }
+        }
+
+        $current['context_migration_complete'] = 1;
+        $this->context_migration_complete = 1;
+        $modules->saveConfig('Jigsaw', $current);
+        return !empty($legacy);
     }
 
     /**

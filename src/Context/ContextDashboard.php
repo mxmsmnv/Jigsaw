@@ -1,14 +1,14 @@
 <?php namespace ProcessWire;
 
 /**
- * Admin dashboard renderer for the Context module.
+ * Admin dashboard renderer for the Jigsaw Context.
  */
 class ContextDashboard {
 
-    /** @var Context */
+    /** @var Jigsaw */
     protected $module;
 
-    public function __construct(Context $module) {
+    public function __construct(Jigsaw $module) {
         $this->module = $module;
     }
 
@@ -20,6 +20,8 @@ class ContextDashboard {
         $inventory = $data['inventory'];
         $stats = $data['stats'];
         $settingsUrl = $data['settingsUrl'];
+        $exportUrl = $data['exportUrl'];
+        $downloadUrl = $data['downloadUrl'];
         $csrfInput = $data['csrfInput'];
         $formatsLabel = $data['formatsLabel'];
         $folderSize = $data['folderSize'];
@@ -47,7 +49,7 @@ class ContextDashboard {
 
         $out = $this->renderStyles();
         $out .= "<div class='ContextDash'>";
-        $out .= $this->renderHero($contextPath, $exists, $settingsUrl, $csrfInput, $exportButtonLabel, $formatLabel, $formatClass, $timeAgo, $folderSize);
+        $out .= $this->renderHero($contextPath, $exists, $settingsUrl, $exportUrl, $downloadUrl, $csrfInput, $exportButtonLabel, $formatLabel, $formatClass, $timeAgo, $folderSize);
         $out .= $this->renderMetrics($stats, $exists, $fileCount, $inventory);
         $out .= $this->renderStatusAndCli($inventory, $formatLabel, $formatClass, $lastExportLabel, $exportSizeLabel, $healthItems);
         $out .= $this->renderConfiguration($formatsLabel);
@@ -58,13 +60,13 @@ class ContextDashboard {
         return $out;
     }
 
-    protected function renderHero($contextPath, $exists, $settingsUrl, $csrfInput, $exportButtonLabel, $formatLabel, $formatClass, $timeAgo, $folderSize) {
+    protected function renderHero($contextPath, $exists, $settingsUrl, $exportUrl, $downloadUrl, $csrfInput, $exportButtonLabel, $formatLabel, $formatClass, $timeAgo, $folderSize) {
         $m = $this->module;
         $out = '';
         $out .= "<div class='ContextDash-hero uk-margin'>";
         $out .= "<div class='uk-grid-small uk-flex-middle' uk-grid>";
         $out .= "<div class='uk-width-expand@m'>";
-        $out .= "<div class='ContextDash-kicker'>Context Module " . $this->html(Context::VERSION) . "</div>";
+        $out .= "<div class='ContextDash-kicker'>Jigsaw Context " . $this->html(Jigsaw::CONTEXT_VERSION) . "</div>";
         $out .= "<h2>AI-ready ProcessWire context</h2>";
         $out .= "<p>Export structure, templates, samples, prompts, and compact TOON files for coding agents.</p>";
         $out .= "<div class='ContextDash-pills'>";
@@ -77,11 +79,11 @@ class ContextDashboard {
         $out .= "</div></div>";
         $out .= "<div class='uk-width-auto@m'>";
         $out .= "<div class='ContextDash-actions'>";
-        $out .= "<form method='post' action='./export/'>{$csrfInput}";
+        $out .= "<form method='post' action='" . $this->attr($exportUrl) . "'>{$csrfInput}";
         $out .= "<button type='submit' class='uk-button uk-button-primary'><i class='fa fa-download'></i> " . $this->html($exportButtonLabel) . "</button>";
         $out .= "</form>";
         if($exists) {
-            $out .= "<form method='post' action='./download/'>{$csrfInput}";
+            $out .= "<form method='post' action='" . $this->attr($downloadUrl) . "'>{$csrfInput}";
             $out .= "<button type='submit' class='uk-button uk-button-default'><i class='fa fa-file-archive-o'></i> Archive</button>";
             $out .= "</form>";
         }

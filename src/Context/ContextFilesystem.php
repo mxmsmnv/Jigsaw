@@ -5,13 +5,13 @@
  */
 class ContextFilesystem {
 
-    /** @var Context */
+    /** @var Jigsaw */
     protected $module;
 
     /** @var callable */
     protected $call;
 
-    public function __construct(Context $module) {
+    public function __construct(Jigsaw $module) {
         $this->module = $module;
         $this->call = \Closure::bind(function($method, ...$args) {
             return $this->$method(...$args);
@@ -53,7 +53,8 @@ class ContextFilesystem {
 
     public function validateContextPath($path) {
         $path = $this->normalizePath($path);
-        $modulePath = $this->normalizePath(dirname(__DIR__));
+        $moduleFile = (string)$this->module->wire('modules')->getModuleFile('Jigsaw');
+        $modulePath = $this->normalizePath(dirname($moduleFile));
         $realPath = realpath($path);
         $pathsToCheck = [$path];
 

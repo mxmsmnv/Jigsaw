@@ -5,13 +5,13 @@
  */
 class ContextSystemExporter {
 
-    /** @var Context */
+    /** @var Jigsaw */
     protected $module;
 
     /** @var callable */
     protected $call;
 
-    public function __construct(Context $module) {
+    public function __construct(Jigsaw $module) {
         $this->module = $module;
         $this->call = \Closure::bind(function($method, ...$args) {
             return $this->$method(...$args);
@@ -28,7 +28,7 @@ class ContextSystemExporter {
             'debug_mode' => $this->module->config->debug,
             'charset' => $this->module->config->dbCharset,
             'exported_at' => date('Y-m-d H:i:s'),
-            'export_version' => Context::VERSION
+            'export_version' => Jigsaw::CONTEXT_VERSION
         ];
     }
 
