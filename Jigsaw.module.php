@@ -6,11 +6,15 @@
  * Private ProcessWire operations and developer toolkit.
  *
  * @author Maxim Semenov <maxim@smnv.org>
- * @version 1.0.0
+ * @version 1.1.0
  */
 class Jigsaw extends Process implements Module {
 
 	private const COMPONENTS = [
+		'ProcessJigsawDiagnostics' => [
+			'group' => 'Diagnostics',
+			'description' => 'Read-only page tree, duplicate-title and URL diagnostics.',
+		],
 		'ProcessDbBackup' => [
 			'group' => 'Operations',
 			'description' => 'Database backups, restores, migrations and schema snapshots.',
@@ -57,7 +61,7 @@ class Jigsaw extends Process implements Module {
 		return [
 			'title' => 'Jigsaw',
 			'summary' => 'Private ProcessWire operations and developer toolkit.',
-			'version' => 100,
+			'version' => 110,
 			'author' => 'Maxim Semenov',
 			'href' => 'https://smnv.org',
 			'icon' => 'puzzle-piece',

@@ -9,6 +9,7 @@ revisions so a deployment does not depend on Git submodules or network access.
 ## Components
 
 - ProcessDbBackup — database backups, restore, migrations and schema snapshots
+- ProcessJigsawDiagnostics — read-only page tree, duplicate-title and URL checks
 - Editor — template file editor
 - AdminBar — frontend administration shortcuts
 - Uninstaller — dependency-aware module removal
@@ -47,10 +48,14 @@ Component sources are vendored deliberately. Review upstream changes, update
 one component at a time, refresh `components.lock.json`, and test the complete
 package before deployment.
 
+`ProcessJigsawDiagnostics` is maintained directly in this repository and is
+therefore not listed in the external component lock.
+
 ## lqrs-utils
 
-The Jigsaw dashboard's lightweight site inventory was informed by the useful
-read-only diagnostics in `mxmsmnv/lqrs-utils`. The original scripts were not
+The Jigsaw dashboard's lightweight inventory and `ProcessJigsawDiagnostics`
+were informed by the useful read-only ideas in `mxmsmnv/lqrs-utils`, especially
+`stat.php`, `duplicates.php`, and `digits.php`. The original scripts were not
 copied because they are tied to LQRS data, contain destructive operations, and
 are not safe as reusable module code.
 
