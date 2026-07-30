@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.2 - 2026-07-30
+
+- Clarified that Jigsaw and its bundled components are not private modules;
+  only the GitHub repository is private during development.
+- Removed development-repository visibility wording from module metadata,
+  dashboard copy, and documentation.
+
 ## 2.0.1 - 2026-07-30
 
 - Corrected the Context integration model: Context remains a complete,

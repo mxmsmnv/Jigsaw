@@ -1,6 +1,6 @@
 # Jigsaw
 
-Private ProcessWire operations and developer toolkit maintained by Maxim Semenov.
+ProcessWire operations and developer toolkit maintained by Maxim Semenov.
 
 Jigsaw is a single installable package containing a dashboard and a curated set
 of independently useful ProcessWire modules. The package vendors exact upstream

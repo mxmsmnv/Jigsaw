@@ -1,7 +1,7 @@
 # Context - ProcessWire Module
 
 > [!IMPORTANT]
-> Context is maintained as a bundled module inside the private
+> Context is maintained as a bundled module inside the
 > [mxmsmnv/Jigsaw](https://github.com/mxmsmnv/Jigsaw) toolkit. The former
 > standalone repository is archived; the complete module remains available here.
 

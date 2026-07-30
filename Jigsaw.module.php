@@ -3,10 +3,10 @@
 /**
  * Jigsaw
  *
- * Private ProcessWire operations and developer toolkit.
+ * ProcessWire operations and developer toolkit.
  *
  * @author Maxim Semenov <maxim@smnv.org>
- * @version 2.0.1
+ * @version 2.0.2
  */
 class Jigsaw extends Process implements Module {
 
@@ -60,8 +60,8 @@ class Jigsaw extends Process implements Module {
 	public static function getModuleInfo(): array {
 		return [
 			'title' => 'Jigsaw',
-			'summary' => 'Private ProcessWire operations and developer toolkit.',
-			'version' => 201,
+			'summary' => 'ProcessWire operations and developer toolkit.',
+			'version' => 202,
 			'author' => 'Maxim Semenov',
 			'href' => 'https://smnv.org',
 			'icon' => 'puzzle-piece',
@@ -138,7 +138,7 @@ class Jigsaw extends Process implements Module {
 		$status = $installed === $total ? 'All components are available.' : "$installed of $total components are installed.";
 		return
 			'<div class="jigsaw-hero">' .
-				'<div><span class="jigsaw-kicker">Private toolkit</span>' .
+				'<div><span class="jigsaw-kicker">ProcessWire toolkit</span>' .
 				'<h1>Operations, diagnostics and development tools in one package.</h1>' .
 				'<p>' . $this->e($status) . '</p></div>' .
 				'<div class="jigsaw-score"><strong>' . $installed . '</strong><span>/ ' . $total . ' ready</span></div>' .

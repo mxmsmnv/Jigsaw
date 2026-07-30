@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Moved maintenance of the complete Context module into the private Jigsaw toolkit.
+- Moved maintenance of the complete Context module into the Jigsaw toolkit.
 - Retained Context as an independently configurable bundled ProcessWire module.
 - Archived the former standalone repository.
 
