@@ -1,9 +1,9 @@
 <?php namespace ProcessWire;
 
 /**
- * Jigsaw Context - AI Gateway
+ * Context Module - AI Gateway
  *
- * Centralized AI provider gateway for the Jigsaw Context and third-party modules.
+ * Centralized AI provider gateway for the Context module and third-party modules.
  * Uses Squad when selected, with direct OpenRouter/OpenAI-compatible access
  * retained for backwards compatibility.
  *
@@ -133,10 +133,10 @@ class ContextAI {
         $maxTokens   = $this->clampInt($options['max_tokens'] ?? $this->config['ai_max_tokens'] ?? 1024, 1, 200000);
         $temperature = $this->clampFloat($options['temperature'] ?? $this->config['ai_temperature'] ?? 0.7, 0.0, 2.0);
         $timeout     = $this->clampInt($options['timeout'] ?? $this->config['ai_timeout'] ?? 120, 5, 300);
-        $caller      = trim((string)($options['caller'] ?? 'Jigsaw'));
+        $caller      = trim((string)($options['caller'] ?? 'Context'));
 
         if ($model === '' && $provider !== self::PROVIDER_SQUAD) $model = self::DEFAULT_MODEL;
-        if ($caller === '') $caller = 'Jigsaw';
+        if ($caller === '') $caller = 'Context';
 
         $messages = $this->normalizeMessages($options['messages'] ?? []);
 
@@ -213,7 +213,7 @@ class ContextAI {
             $prompt .= "\n\nAdditional context: {$context}";
         }
 
-        return $this->complete($prompt, ['caller' => 'Jigsaw::summarizePage']);
+        return $this->complete($prompt, ['caller' => 'Context::summarizePage']);
     }
 
     /**
@@ -232,7 +232,7 @@ class ContextAI {
         return $this->complete([
             'messages' => [['role' => 'user', 'content' => $content]],
             'system'   => $system,
-            'caller'   => 'Jigsaw::askAboutSite',
+            'caller'   => 'Context::askAboutSite',
         ]);
     }
 
@@ -479,7 +479,7 @@ class ContextAI {
     /**
      * Build HTTP headers.
      */
-    protected function getHeaders(string $caller = 'Jigsaw'): array {
+    protected function getHeaders(string $caller = 'Context'): array {
         $key      = $this->config['ai_api_key'] ?? '';
         $provider = $this->config['ai_provider'] ?? self::PROVIDER_OPENROUTER;
 

@@ -1,21 +1,43 @@
 <?php namespace ProcessWire;
 
 /**
- * Jigsaw Context features
- * 
+ * Context - ProcessWire AI Context Exporter
+ *
  * Full-featured module for exporting ProcessWire site structure
  * in a format optimized for working with AI assistants.
- * 
+ *
  * Creates complete documentation: structure, templates, content samples,
  * API schemas, code snippets, URL mapping and ready-to-use AI prompts.
- * 
+ *
  * Supports JSON and TOON (Token-Oriented Object Notation) formats.
  * TOON format reduces token consumption by 30-60% for AI prompts.
  */
 
-trait JigsawContextFeatures {
+class Context extends Process implements Module, ConfigurableModule {
 
-    public const CONTEXT_VERSION = '2.1.0';
+    const VERSION = '2.2.0';
+
+    public static function getModuleInfo() {
+        return [
+            'title' => 'Context',
+            'version' => 220,
+            'summary' => 'Export ProcessWire site context for AI development (bundled with Jigsaw)',
+            'author' => 'Maxim Semenov',
+            'href'     => 'https://smnv.org',
+            'icon' => 'code',
+            'permissions' => [
+                'context-admin' => 'Administer Context exports and AI gateway'
+            ],
+            'page' => [
+                'name' => 'context',
+                'parent' => 'setup',
+                'title' => 'Context'
+            ],
+            'requires' => 'ProcessWire>=3.0',
+            'autoload' => true,
+            'singular' => true
+        ];
+    }
 
     // Default module settings
     protected static $configDefaults = [
@@ -51,8 +73,7 @@ trait JigsawContextFeatures {
         'ai_system_prompt'   => '',
         'ai_site_url'        => '',
         'ai_site_name'       => '',
-        'ai_custom_endpoint' => '',
-        'context_migration_complete' => 0
+        'ai_custom_endpoint' => ''
     ];
 
     /** Track whether static dependencies are loaded */
@@ -61,40 +82,40 @@ trait JigsawContextFeatures {
     protected static function loadDependencies() : void {
         if(self::$dependenciesLoaded) return;
 
-        require_once __DIR__ . '/Context/ContextAI.php';
-        require_once __DIR__ . '/Context/ContextToon.php';
-        require_once __DIR__ . '/Context/ContextSampleSerializer.php';
-        require_once __DIR__ . '/Context/ContextDashboard.php';
-        require_once __DIR__ . '/Context/ContextExporter.php';
-        require_once __DIR__ . '/Context/ContextConfigFields.php';
-        require_once __DIR__ . '/Context/ContextCli.php';
-        require_once __DIR__ . '/Context/ContextAutoUpdater.php';
-        require_once __DIR__ . '/Context/ContextFilesystem.php';
-        require_once __DIR__ . '/Context/ContextStructureExporter.php';
-        require_once __DIR__ . '/Context/ContextTemplateExporter.php';
-        require_once __DIR__ . '/Context/ContextSampleExporter.php';
-        require_once __DIR__ . '/Context/ContextApiExporter.php';
-        require_once __DIR__ . '/Context/ContextMetadataExporter.php';
-        require_once __DIR__ . '/Context/ContextPromptExporter.php';
-        require_once __DIR__ . '/Context/ContextPromptTemplates.php';
-        require_once __DIR__ . '/Context/ContextIntegrationExporter.php';
-        require_once __DIR__ . '/Context/ContextSystemExporter.php';
-        require_once __DIR__ . '/Context/ContextDocsExporter.php';
-        require_once __DIR__ . '/Context/ContextArchiveDownloader.php';
-        require_once __DIR__ . '/Context/ContextAdminActions.php';
-        require_once __DIR__ . '/Context/ContextFrontendDetector.php';
-        require_once __DIR__ . '/Context/ContextAiTestAction.php';
-        require_once __DIR__ . '/Context/ContextExportFormats.php';
-        require_once __DIR__ . '/Context/ContextSiteInspector.php';
-        require_once __DIR__ . '/Context/ContextWebHelper.php';
+        require_once __DIR__ . '/src/ContextAI.php';
+        require_once __DIR__ . '/src/ContextToon.php';
+        require_once __DIR__ . '/src/ContextSampleSerializer.php';
+        require_once __DIR__ . '/src/ContextDashboard.php';
+        require_once __DIR__ . '/src/ContextExporter.php';
+        require_once __DIR__ . '/src/ContextConfigFields.php';
+        require_once __DIR__ . '/src/ContextCli.php';
+        require_once __DIR__ . '/src/ContextAutoUpdater.php';
+        require_once __DIR__ . '/src/ContextFilesystem.php';
+        require_once __DIR__ . '/src/ContextStructureExporter.php';
+        require_once __DIR__ . '/src/ContextTemplateExporter.php';
+        require_once __DIR__ . '/src/ContextSampleExporter.php';
+        require_once __DIR__ . '/src/ContextApiExporter.php';
+        require_once __DIR__ . '/src/ContextMetadataExporter.php';
+        require_once __DIR__ . '/src/ContextPromptExporter.php';
+        require_once __DIR__ . '/src/ContextPromptTemplates.php';
+        require_once __DIR__ . '/src/ContextIntegrationExporter.php';
+        require_once __DIR__ . '/src/ContextSystemExporter.php';
+        require_once __DIR__ . '/src/ContextDocsExporter.php';
+        require_once __DIR__ . '/src/ContextArchiveDownloader.php';
+        require_once __DIR__ . '/src/ContextAdminActions.php';
+        require_once __DIR__ . '/src/ContextFrontendDetector.php';
+        require_once __DIR__ . '/src/ContextAiTestAction.php';
+        require_once __DIR__ . '/src/ContextExportFormats.php';
+        require_once __DIR__ . '/src/ContextSiteInspector.php';
+        require_once __DIR__ . '/src/ContextWebHelper.php';
 
         self::$dependenciesLoaded = true;
     }
 
     /**
-     * Apply Context defaults from the Jigsaw constructor.
+     * Constructor - apply default values
      */
-    protected function initializeContextFeatures(): void {
+    public function __construct() {
         self::loadDependencies();
         foreach(self::$configDefaults as $key => $value) {
             $this->$key = $value;
@@ -211,14 +232,12 @@ trait JigsawContextFeatures {
      */
     public function init() {
         parent::init();
-        $this->migrateLegacyContextConfig();
         $this->applyExportFormats();
-        
-        // Preserve the public Context API while Jigsaw becomes its owner.
-        $this->wire('jigsaw', $this);
+
+        // Register API variable
         $this->wire('context', $this);
         $this->dispatchCliCommand();
-        
+
         // Auto-update if enabled
         if($this->auto_update) {
             $this->addHookAfter('Template::saved', $this, 'autoUpdate');
@@ -260,9 +279,9 @@ trait JigsawContextFeatures {
 
     /**
      * AJAX endpoint: test AI gateway connection
-     * Called at /setup/jigsaw/context-ai-test/
+     * Called at /setup/context/ai-test/
      */
-    protected function contextAiTest() {
+    public function executeAiTest() {
         $this->aiTestAction()->execute();
     }
 
@@ -730,21 +749,21 @@ trait JigsawContextFeatures {
     protected function generateProjectContext() {
         return $this->promptTemplates()->generateProjectContext();
     }
-    
+
     /**
      * Create IDE integration files
      */
     protected function createIntegrationFiles() {
         $this->integrationExporter()->createIntegrationFiles();
     }
-    
+
     /**
      * Update .cursorrules file (add paths if not exists)
      */
     protected function updateCursorRules($rootDir) {
         $this->integrationExporter()->updateCursorRules($rootDir);
     }
-    
+
     /**
      * Update .claudecode.json file (add context paths if not exists)
      */
@@ -810,14 +829,14 @@ trait JigsawContextFeatures {
     /**
      * Download context folder as ZIP archive
      */
-    protected function contextDownload() {
+    public function executeDownload() {
         $this->archiveDownloader()->execute();
     }
 
     /**
      * Export context from the admin action route.
      */
-    protected function contextExport() {
+    public function executeExport() {
         $this->adminActions()->executeExport();
     }
 
@@ -827,7 +846,7 @@ trait JigsawContextFeatures {
     protected function detectFrontendStack() {
         return $this->frontendDetector()->detectFrontendStack();
     }
-    
+
     /**
      * Detect JavaScript frameworks only (helper for manual CSS selection)
      */
@@ -859,7 +878,7 @@ trait JigsawContextFeatures {
     /**
      * Main module page
      */
-    protected function renderContextDashboard() {
+    public function execute() {
         $this->requireContextAccess();
 
         $contextPath = $this->getContextPath();
@@ -874,43 +893,12 @@ trait JigsawContextFeatures {
             'exists' => $exists,
             'inventory' => $inventory,
             'stats' => $this->getSiteStats(),
-            'settingsUrl' => $this->config->urls->admin . 'module/edit?name=Jigsaw',
-            'exportUrl' => $this->contextAdminUrl('context-export/'),
-            'downloadUrl' => $this->contextAdminUrl('context-download/'),
+            'settingsUrl' => $this->config->urls->admin . "module/edit?name=Context",
             'csrfInput' => $this->getCsrfInputMarkup(),
             'formatsLabel' => $this->exportFormatLabel($this->normalizeExportFormats()),
             'folderSize' => $folderSize,
             'lastModified' => $lastModified
         ]);
-    }
-
-    public function contextAdminUrl(string $action = ''): string {
-        $base = rtrim((string)$this->config->urls->admin, '/') . '/setup/jigsaw/';
-        return $base . ltrim($action, '/');
-    }
-
-    /**
-     * Import settings from the discontinued Context module once.
-     */
-    protected function migrateLegacyContextConfig(): bool {
-        if(!empty($this->context_migration_complete)) return false;
-
-        $modules = $this->wire('modules');
-        $legacy = (array)$modules->getConfig('Context');
-        $current = (array)$modules->getConfig('Jigsaw');
-
-        foreach(self::$configDefaults as $key => $default) {
-            if($key === 'context_migration_complete') continue;
-            if(array_key_exists($key, $legacy) && !array_key_exists($key, $current)) {
-                $current[$key] = $legacy[$key];
-                $this->$key = $legacy[$key];
-            }
-        }
-
-        $current['context_migration_complete'] = 1;
-        $this->context_migration_complete = 1;
-        $modules->saveConfig('Jigsaw', $current);
-        return !empty($legacy);
     }
 
     /**

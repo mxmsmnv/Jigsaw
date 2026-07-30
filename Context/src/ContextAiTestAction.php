@@ -5,13 +5,13 @@
  */
 class ContextAiTestAction {
 
-    /** @var Jigsaw */
+    /** @var Context */
     protected $module;
 
     /** @var callable */
     protected $call;
 
-    public function __construct(Jigsaw $module) {
+    public function __construct(Context $module) {
         $this->module = $module;
         $this->call = \Closure::bind(function($method, ...$args) {
             return $this->$method(...$args);
@@ -41,7 +41,7 @@ class ContextAiTestAction {
         $result = $ai->chat([
             'messages'   => [['role' => 'user', 'content' => 'Reply with only the word: OK']],
             'max_tokens' => 10,
-            'caller'     => 'Jigsaw::testConnection',
+            'caller'     => 'Context::testConnection',
         ]);
         $ms = round((microtime(true) - $start) * 1000);
 

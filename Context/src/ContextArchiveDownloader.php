@@ -5,13 +5,13 @@
  */
 class ContextArchiveDownloader {
 
-    /** @var Jigsaw */
+    /** @var Context */
     protected $module;
 
     /** @var callable */
     protected $call;
 
-    public function __construct(Jigsaw $module) {
+    public function __construct(Context $module) {
         $this->module = $module;
         $this->call = \Closure::bind(function($method, ...$args) {
             return $this->$method(...$args);
@@ -25,7 +25,7 @@ class ContextArchiveDownloader {
             $this->invoke('requirePostCsrf');
         } catch(\Exception $e) {
             $this->module->error($e->getMessage());
-            $this->module->session->redirect($this->module->contextAdminUrl('context/'));
+            $this->module->session->redirect($this->module->page->url);
             return;
         }
 
@@ -35,13 +35,13 @@ class ContextArchiveDownloader {
             $this->invoke('validateContextPath', $contextPath);
         } catch(\Exception $e) {
             $this->module->error($e->getMessage());
-            $this->module->session->redirect($this->module->contextAdminUrl('context/'));
+            $this->module->session->redirect($this->module->page->url);
             return;
         }
 
         if(!is_dir($contextPath)) {
             $this->module->error("Nothing to download - export context first.");
-            $this->module->session->redirect($this->module->contextAdminUrl('context/'));
+            $this->module->session->redirect($this->module->page->url);
             return;
         }
 
@@ -50,7 +50,7 @@ class ContextArchiveDownloader {
         $tmpFile = $this->createZip($contextPath);
 
         if($tmpFile === '') {
-            $this->module->session->redirect($this->module->contextAdminUrl('context/'));
+            $this->module->session->redirect($this->module->page->url);
             return;
         }
 

@@ -5,13 +5,13 @@
  */
 class ContextTemplateExporter {
 
-    /** @var Jigsaw */
+    /** @var Context */
     protected $module;
 
     /** @var callable */
     protected $call;
 
-    public function __construct(Jigsaw $module) {
+    public function __construct(Context $module) {
         $this->module = $module;
         $this->call = \Closure::bind(function($method, ...$args) {
             return $this->$method(...$args);

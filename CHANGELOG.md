@@ -1,13 +1,11 @@
 # Changelog
 
-## 2.0.0 - 2026-07-30
+## 2.0.1 - 2026-07-30
 
-- Merged the complete Context exporter, AI gateway, CLI, prompts, archives,
-  configuration UI and auto-update workflow into the main Jigsaw module.
-- Preserved `wire('context')`, Context CLI flags and the existing export folder.
-- Added one-time migration of standalone Context configuration into Jigsaw.
-- Moved Context administration to **Setup → Jigsaw → Context**.
-- Removed Context as a separately installed bundled module.
+- Corrected the Context integration model: Context remains a complete,
+  independently configurable module bundled inside the Jigsaw toolkit.
+- Removed Context behavior and configuration from the Jigsaw dashboard module.
+- Updated the vendored Context snapshot to its final standalone release, 2.2.0.
 
 ## 1.1.0 - 2026-07-30
 

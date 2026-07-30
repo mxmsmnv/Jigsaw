@@ -18,11 +18,11 @@ revisions so a deployment does not depend on Git submodules or network access.
 - LanguageAccessManager — language editing permissions
 - WarmUp and ProcessWarmUp — email warmup coordinator
 - ProcessFieldAudit — field and Repeater Matrix inventory
-- Jigsaw Context — AI-ready exports, prompts, CLI tools and AI gateway built
-  directly into the main Jigsaw module
+- Context — complete, independently configurable AI-ready site context exporter
 
-`ProcessDbBackup` is sourced from its `dev` branch. All other components are
-sourced from their default stable branches. Exact revisions are recorded in
+`ProcessDbBackup` is sourced from its `dev` branch. Context is maintained in
+this toolkit after retirement of its standalone repository. The remaining
+components are sourced from their default stable branches. Exact revisions are recorded in
 [`components.lock.json`](components.lock.json).
 
 ## Requirements
@@ -41,18 +41,8 @@ scheduled database backups use LazyCron and cloud backups require cURL.
 4. Open **Setup → Jigsaw**.
 
 Installing Jigsaw installs its bundled components. Component configuration and
-permissions remain independent.
-
-### Migrating from Context
-
-Jigsaw 2 imports existing Context configuration—including AI provider settings
-and encrypted/stored API configuration—on its first boot. The compatibility API
-`wire('context')` continues to return the Jigsaw module, so integrations using
-`wire('context')->ai()` do not need to change.
-
-After verifying **Setup → Jigsaw → Context**, uninstall the discontinued
-standalone Context module. Existing exports in `site/assets/cache/context/`
-remain in place and are reused by Jigsaw.
+permissions remain independent, including Context's own settings, admin page,
+CLI commands, and `context-admin` permission.
 
 ## Updating
 
@@ -60,9 +50,8 @@ Component sources are vendored deliberately. Review upstream changes, update
 one component at a time, refresh `components.lock.json`, and test the complete
 package before deployment.
 
-`ProcessJigsawDiagnostics` and Jigsaw Context are maintained directly in this
-repository. The original Context merge commit remains recorded under
-`merged_sources` for provenance.
+`ProcessJigsawDiagnostics` is maintained directly in this repository and is
+therefore not listed in the external component lock.
 
 ## lqrs-utils
 

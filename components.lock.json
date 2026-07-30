@@ -55,15 +55,13 @@
       "repository": "mxmsmnv/ProcessFieldAudit",
       "branch": "main",
       "commit": "7c42250984a0966bf72a0af385d61462604e4616"
-    }
-  ],
-  "merged_sources": [
+    },
     {
       "name": "Context",
       "repository": "mxmsmnv/Context",
       "branch": "main",
-      "commit": "170e69d117d5d18c244c5a511896e669ecbfe18f",
-      "destination": "Jigsaw core and src/Context"
+      "commit": "7816393d0168e8a27b527d4231c31b1c7165635b",
+      "status": "archived; continued as a bundled Jigsaw module"
     }
   ]
 }

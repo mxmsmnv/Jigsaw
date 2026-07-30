@@ -1,7 +1,7 @@
 <?php namespace ProcessWire;
 
 /**
- * Jigsaw Context - TOON serializer
+ * Context Module - TOON serializer
  *
  * Converts PHP arrays into Token-Oriented Object Notation for AI context files.
  */

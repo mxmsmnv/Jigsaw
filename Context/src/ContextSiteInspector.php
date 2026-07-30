@@ -5,10 +5,10 @@
  */
 class ContextSiteInspector {
 
-    /** @var Jigsaw */
+    /** @var Context */
     protected $module;
 
-    public function __construct(Jigsaw $module) {
+    public function __construct(Context $module) {
         $this->module = $module;
     }
 

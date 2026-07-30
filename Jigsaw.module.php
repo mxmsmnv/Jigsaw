@@ -1,24 +1,14 @@
 <?php namespace ProcessWire;
 
-require_once __DIR__ . '/src/JigsawContextFeatures.php';
-
 /**
  * Jigsaw
  *
  * Private ProcessWire operations and developer toolkit.
  *
  * @author Maxim Semenov <maxim@smnv.org>
- * @version 2.0.0
+ * @version 2.0.1
  */
-class Jigsaw extends Process implements Module, ConfigurableModule {
-
-	use JigsawContextFeatures;
-
-	public const VERSION = '2.0.0';
-
-	public function __construct() {
-		$this->initializeContextFeatures();
-	}
+class Jigsaw extends Process implements Module {
 
 	private const COMPONENTS = [
 		'ProcessJigsawDiagnostics' => [
@@ -61,13 +51,17 @@ class Jigsaw extends Process implements Module, ConfigurableModule {
 			'group' => 'Developer',
 			'description' => 'Field, fieldtype and Repeater Matrix inventory.',
 		],
+		'Context' => [
+			'group' => 'Developer',
+			'description' => 'AI-ready site structure and configuration exports.',
+		],
 	];
 
 	public static function getModuleInfo(): array {
 		return [
 			'title' => 'Jigsaw',
 			'summary' => 'Private ProcessWire operations and developer toolkit.',
-			'version' => 200,
+			'version' => 201,
 			'author' => 'Maxim Semenov',
 			'href' => 'https://smnv.org',
 			'icon' => 'puzzle-piece',
@@ -81,20 +75,10 @@ class Jigsaw extends Process implements Module, ConfigurableModule {
 			'permission' => 'jigsaw',
 			'permissions' => [
 				'jigsaw' => 'View the Jigsaw toolkit dashboard',
-				'context-admin' => 'Administer Jigsaw Context exports and AI gateway',
 			],
 			'singular' => true,
-			'autoload' => true,
+			'autoload' => false,
 		];
-	}
-
-	public function ___install(): void {
-		parent::___install();
-		$this->migrateLegacyContextConfig();
-	}
-
-	public function ___upgrade($fromVersion, $toVersion): void {
-		$this->migrateLegacyContextConfig();
 	}
 
 	public function ___execute(): string {
@@ -106,10 +90,6 @@ class Jigsaw extends Process implements Module, ConfigurableModule {
 		$total = count($components);
 
 		$out = $this->renderSummary($installed, $total);
-		if ($this->wire('modules')->isInstalled('Context')) {
-			$out .= '<div class="uk-alert-warning" uk-alert><strong>Legacy Context is still installed.</strong> '
-				. 'Its settings have been migrated to Jigsaw. Uninstall the old Context module after verifying the Jigsaw Context screen.</div>';
-		}
 		$out .= $this->renderEnvironment();
 
 		foreach ($this->groupComponents($components) as $group => $items) {
@@ -123,27 +103,6 @@ class Jigsaw extends Process implements Module, ConfigurableModule {
 
 		$out .= $this->styles();
 		return $out;
-	}
-
-	public function ___executeContext(): string {
-		$this->headline('Jigsaw Context');
-		$this->browserTitle('Jigsaw Context');
-		return $this->renderContextDashboard();
-	}
-
-	public function ___executeContextExport(): string {
-		$this->contextExport();
-		return '';
-	}
-
-	public function ___executeContextDownload(): string {
-		$this->contextDownload();
-		return '';
-	}
-
-	public function ___executeContextAiTest(): string {
-		$this->contextAiTest();
-		return '';
 	}
 
 	private function componentData(): array {
@@ -163,16 +122,6 @@ class Jigsaw extends Process implements Module, ConfigurableModule {
 				'url' => $installed ? $this->moduleUrl($name, $info) : '',
 			];
 		}
-
-		$items[] = [
-			'name' => 'JigsawContext',
-			'title' => 'Jigsaw Context',
-			'version' => self::CONTEXT_VERSION,
-			'group' => 'Developer',
-			'description' => 'AI-ready exports, prompts, CLI tools and provider gateway built into Jigsaw.',
-			'installed' => true,
-			'url' => $this->contextAdminUrl('context/'),
-		];
 
 		return $items;
 	}
