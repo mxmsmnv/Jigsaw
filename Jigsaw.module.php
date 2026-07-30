@@ -1,72 +1,30 @@
 <?php namespace ProcessWire;
 
+require_once __DIR__ . '/src/JigsawFeatureRegistry.php';
+require_once __DIR__ . '/src/JigsawConfigBuilder.php';
+
 /**
  * Jigsaw
  *
  * ProcessWire operations and developer toolkit.
  *
  * @author Maxim Semenov <maxim@smnv.org>
- * @version 2.0.2
+ * @version 3.0.0
  */
-class Jigsaw extends Process implements Module {
+class Jigsaw extends Process implements Module, ConfigurableModule {
 
-	private const COMPONENTS = [
-		'ProcessJigsawDiagnostics' => [
-			'group' => 'Diagnostics',
-			'description' => 'Read-only page tree, duplicate-title and URL diagnostics.',
-		],
-		'ProcessDbBackup' => [
-			'group' => 'Operations',
-			'description' => 'Database backups, restores, migrations and schema snapshots.',
-		],
-		'ProcessSsl' => [
-			'group' => 'Operations',
-			'description' => 'SSL certificate monitoring and certificate tools.',
-		],
-		'WarmUp' => [
-			'group' => 'Operations',
-			'description' => 'Email warmup scheduling, integrations and statistics.',
-		],
-		'WireAnnouncementBar' => [
-			'group' => 'Site',
-			'description' => 'Dismissible frontend announcement bar.',
-		],
-		'AdminBar' => [
-			'group' => 'Site',
-			'description' => 'Frontend administration shortcuts for editors.',
-		],
-		'LanguageAccessManager' => [
-			'group' => 'Access',
-			'description' => 'Language editing permissions and role assignments.',
-		],
-		'Editor' => [
-			'group' => 'Developer',
-			'description' => 'Template file browser and editor.',
-		],
-		'Uninstaller' => [
-			'group' => 'Developer',
-			'description' => 'Audited module removal with dependency discovery.',
-		],
-		'ProcessFieldAudit' => [
-			'group' => 'Developer',
-			'description' => 'Field, fieldtype and Repeater Matrix inventory.',
-		],
-		'Context' => [
-			'group' => 'Developer',
-			'description' => 'AI-ready site structure and configuration exports.',
-		],
-	];
+	public const VERSION = '3.0.0';
+	private ?JigsawFeatureRegistry $features = null;
 
 	public static function getModuleInfo(): array {
 		return [
 			'title' => 'Jigsaw',
 			'summary' => 'ProcessWire operations and developer toolkit.',
-			'version' => 202,
+			'version' => 300,
 			'author' => 'Maxim Semenov',
 			'href' => 'https://smnv.org',
 			'icon' => 'puzzle-piece',
 			'requires' => ['ProcessWire>=3.0.200', 'PHP>=8.2'],
-			'installs' => array_keys(self::COMPONENTS),
 			'page' => [
 				'name' => 'jigsaw',
 				'parent' => 'setup',
@@ -75,18 +33,61 @@ class Jigsaw extends Process implements Module {
 			'permission' => 'jigsaw',
 			'permissions' => [
 				'jigsaw' => 'View the Jigsaw toolkit dashboard',
+				'jigsaw-diagnostics' => 'View read-only Jigsaw diagnostics',
+				'db-backup' => 'Manage database backups',
+				'ssl-manager' => 'Manage SSL certificates',
+				'warmup-admin' => 'Administer email warmup',
+				'language-access-manager' => 'Manage language access',
+				'editor' => 'Use the Jigsaw file editor',
+				'context-admin' => 'Administer Context exports and AI gateway',
 			],
 			'singular' => true,
-			'autoload' => false,
+			'autoload' => true,
 		];
+	}
+
+	public function init(): void {
+		parent::init();
+		$this->wire('jigsaw', $this);
+		$this->featureRegistry()->initAutoloadFeatures();
+	}
+
+	public function ready(): void {
+		$this->featureRegistry()->readyAutoloadFeatures();
+	}
+
+	public function ___install(): void {
+		parent::___install();
+		$this->featureRegistry()->migrateLegacyModuleConfig();
+		$this->installFeatureStorage();
+	}
+
+	public function ___upgrade($fromVersion, $toVersion): void {
+		$this->featureRegistry()->migrateLegacyModuleConfig();
+		$this->installFeatureStorage();
+	}
+
+	public function ___uninstall(): void {
+		foreach (['ssl', 'languages'] as $key) {
+			$feature = $this->featureRegistry()->feature($key, true);
+			if (method_exists($feature, 'uninstallStorage')) $feature->uninstallStorage();
+		}
+		parent::___uninstall();
+	}
+
+	private function installFeatureStorage(): void {
+		foreach (['backup', 'ssl', 'languages'] as $key) {
+			$feature = $this->featureRegistry()->feature($key, true);
+			if (method_exists($feature, 'installStorage')) $feature->installStorage();
+		}
 	}
 
 	public function ___execute(): string {
 		$this->headline('Jigsaw');
 		$this->browserTitle('Jigsaw');
 
-		$components = $this->componentData();
-		$installed = count(array_filter($components, static fn(array $item): bool => $item['installed']));
+		$components = $this->featureRegistry()->dashboardData();
+		$installed = count(array_filter($components, static fn(array $item): bool => $item['enabled']));
 		$total = count($components);
 
 		$out = $this->renderSummary($installed, $total);
@@ -105,25 +106,71 @@ class Jigsaw extends Process implements Module {
 		return $out;
 	}
 
-	private function componentData(): array {
-		$modules = $this->wire('modules');
-		$items = [];
+	public static function getModuleConfigInputfields(array $data): InputfieldWrapper {
+		return JigsawConfigBuilder::build($data);
+	}
 
-		foreach (self::COMPONENTS as $name => $definition) {
-			$installed = $modules->isInstalled($name);
-			$info = $modules->getModuleInfo($name);
-			$items[] = [
-				'name' => $name,
-				'title' => (string)($info['title'] ?? $name),
-				'version' => (string)($info['version'] ?? ''),
-				'group' => $definition['group'],
-				'description' => $definition['description'],
-				'installed' => $installed,
-				'url' => $installed ? $this->moduleUrl($name, $info) : '',
-			];
+	public function feature(string $key): object {
+		return $this->featureRegistry()->feature($key);
+	}
+
+	public function ___executeDiagnostics(): string { return $this->dispatch('diagnostics', '___execute'); }
+	public function ___executeDiagnosticsTree(): string { return $this->dispatch('diagnostics', '___executeTree'); }
+	public function ___executeDiagnosticsDuplicates(): string { return $this->dispatch('diagnostics', '___executeDuplicates'); }
+	public function ___executeDiagnosticsUrls(): string { return $this->dispatch('diagnostics', '___executeUrls'); }
+	public function ___executeBackup(): string { return $this->dispatch('backup', '___execute'); }
+	public function ___executeSsl(): string { return $this->dispatch('ssl', 'execute'); }
+	public function ___executeSslAdd(): string { return $this->dispatch('ssl', 'executeAdd'); }
+	public function ___executeSslDelete(): string { return $this->dispatch('ssl', 'executeDelete'); }
+	public function ___executeSslCsr(): string { return $this->dispatch('ssl', 'executeCsr'); }
+	public function ___executeSslSelfsigned(): string { return $this->dispatch('ssl', 'executeSelfsigned'); }
+	public function ___executeSslCheck(): string { return $this->dispatch('ssl', 'executeCheck'); }
+	public function ___executeSslCert(): string { return $this->dispatch('ssl', 'executeCert'); }
+	public function ___executeSslExport(): string { return $this->dispatch('ssl', 'executeExport'); }
+	public function ___executeSslView(): string { return $this->dispatch('ssl', 'executeView'); }
+	public function ___executeEditor(): string { return $this->dispatch('editor', 'execute'); }
+	public function ___executeEditorList(): string { return $this->dispatch('editor', 'executeList'); }
+	public function ___executeEditorRead(): string { return $this->dispatch('editor', 'executeRead'); }
+	public function ___executeEditorServe(): string { return $this->dispatch('editor', 'executeServe'); }
+	public function ___executeEditorSave(): string { return $this->dispatch('editor', 'executeSave'); }
+	public function ___executeEditorUpload(): string { return $this->dispatch('editor', 'executeUpload'); }
+	public function ___executeEditorCreate(): string { return $this->dispatch('editor', 'executeCreate'); }
+	public function ___executeEditorRename(): string { return $this->dispatch('editor', 'executeRename'); }
+	public function ___executeEditorDelete(): string { return $this->dispatch('editor', 'executeDelete'); }
+	public function ___executeUninstaller(): string { return $this->dispatch('uninstaller', 'execute'); }
+	public function ___executeFields(): string { return $this->dispatch('fields', '___execute'); }
+	public function ___executeContext(): string { return $this->dispatch('context', 'execute'); }
+	public function ___executeContextExport(): string { return $this->dispatch('context', 'executeExport'); }
+	public function ___executeContextDownload(): string { return $this->dispatch('context', 'executeDownload'); }
+	public function ___executeContextAiTest(): string { return $this->dispatch('context', 'executeAiTest'); }
+
+	public function ___executeWarmup(): string {
+		$this->assertFeaturePermission('warmup');
+		require_once __DIR__ . '/src/Features/WarmUp/WarmUpDashboard.php';
+		$dashboard = $this->wire(new JigsawWarmUpDashboard());
+		$dashboard->setWarmup($this->featureRegistry()->readyFeature('warmup'));
+		$dashboard->init();
+		return (string)$dashboard->___execute();
+	}
+
+	private function dispatch(string $key, string $method): string {
+		$this->assertFeaturePermission($key);
+		$feature = $this->featureRegistry()->initFeature($key);
+		if (!is_callable([$feature, $method])) throw new Wire404Exception();
+		return (string)$feature->$method();
+	}
+
+	private function assertFeaturePermission(string $key): void {
+		$definition = JigsawFeatureRegistry::definitions()[$key] ?? null;
+		$permission = $definition['permission'] ?? 'jigsaw';
+		$user = $this->wire('user');
+		if (!$user->isSuperuser() && !$user->hasPermission($permission)) {
+			throw new WirePermissionException('You do not have permission to use this Jigsaw feature.');
 		}
+	}
 
-		return $items;
+	private function featureRegistry(): JigsawFeatureRegistry {
+		return $this->features ??= new JigsawFeatureRegistry($this);
 	}
 
 	private function groupComponents(array $components): array {
@@ -135,7 +182,7 @@ class Jigsaw extends Process implements Module {
 	}
 
 	private function renderSummary(int $installed, int $total): string {
-		$status = $installed === $total ? 'All components are available.' : "$installed of $total components are installed.";
+		$status = $installed === $total ? 'All features are enabled.' : "$installed of $total features are enabled.";
 		return
 			'<div class="jigsaw-hero">' .
 				'<div><span class="jigsaw-kicker">ProcessWire toolkit</span>' .
@@ -167,13 +214,16 @@ class Jigsaw extends Process implements Module {
 	}
 
 	private function renderComponent(array $item): string {
-		$statusClass = $item['installed'] ? 'is-ready' : 'is-missing';
-		$statusLabel = $item['installed'] ? 'Ready' : 'Missing';
+		$statusClass = $item['enabled'] ? 'is-ready' : 'is-missing';
+		$statusLabel = $item['enabled'] ? 'Enabled' : 'Disabled';
 		$title = $this->e($item['title']);
-		$version = $item['version'] !== '' ? '<small>v' . $this->e($item['version']) . '</small>' : '';
-		$action = $item['url'] !== ''
-			? '<a class="jigsaw-action" href="' . $this->e($item['url']) . '">Open</a>'
-			: '<span class="jigsaw-action is-disabled">Refresh modules</span>';
+		$version = '';
+		$url = $item['admin'] && $item['enabled']
+			? rtrim((string)$this->wire('page')->url, '/') . '/' . rawurlencode($item['key']) . '/'
+			: '';
+		$action = $url !== ''
+			? '<a class="jigsaw-action" href="' . $this->e($url) . '">Open</a>'
+			: '<span class="jigsaw-action is-disabled">' . ($item['enabled'] ? 'Background feature' : 'Disabled') . '</span>';
 
 		return
 			'<article class="jigsaw-card ' . $statusClass . '">' .
@@ -182,19 +232,6 @@ class Jigsaw extends Process implements Module {
 				'<p>' . $this->e($item['description']) . '</p>' .
 				$action .
 			'</article>';
-	}
-
-	private function moduleUrl(string $name, array $info): string {
-		$admin = (string)$this->wire('config')->urls->admin;
-		$page = $info['page'] ?? null;
-
-		if (is_array($page) && !empty($page['name'])) {
-			$parent = trim((string)($page['parent'] ?? ''), '/');
-			$prefix = $parent !== '' && $parent !== 'admin' ? $parent . '/' : '';
-			return $admin . $prefix . trim((string)$page['name'], '/') . '/';
-		}
-
-		return $admin . 'module/edit?name=' . rawurlencode($name);
 	}
 
 	private function e(string $value): string {

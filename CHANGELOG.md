@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.0.0 - 2026-07-30
+
+- Rebuilt Jigsaw as one super-module rather than a package that installs donor
+  modules.
+- Made `Jigsaw.module.php` the only ProcessWire module entry point.
+- Refactored Backup, Context, Editor, Admin Bar, Announcement Bar, SSL,
+  Language Access, WarmUp, Field Audit, Diagnostics, and Uninstaller into
+  internal feature controllers and services.
+- Added unified feature routing, permissions, lifecycle, configuration, and
+  legacy configuration migration.
+- Namespaced internal class names with a `Jigsaw` prefix so original donor
+  modules can coexist during migration without PHP class collisions.
+- Replaced the component lock with a donor source provenance lock.
+
 ## 2.0.2 - 2026-07-30
 
 - Clarified that Jigsaw and its bundled components are not private modules;
