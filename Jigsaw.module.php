@@ -9,18 +9,18 @@ require_once __DIR__ . '/src/JigsawConfigBuilder.php';
  * ProcessWire operations and developer toolkit.
  *
  * @author Maxim Semenov <maxim@smnv.org>
- * @version 3.0.0
+ * @version 3.0.1
  */
 class Jigsaw extends Process implements Module, ConfigurableModule {
 
-	public const VERSION = '3.0.0';
+	public const VERSION = '3.0.1';
 	private ?JigsawFeatureRegistry $features = null;
 
 	public static function getModuleInfo(): array {
 		return [
 			'title' => 'Jigsaw',
 			'summary' => 'ProcessWire operations and developer toolkit.',
-			'version' => 300,
+			'version' => 301,
 			'author' => 'Maxim Semenov',
 			'href' => 'https://smnv.org',
 			'icon' => 'puzzle-piece',

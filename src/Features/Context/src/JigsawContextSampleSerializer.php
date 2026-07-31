@@ -179,14 +179,57 @@ class JigsawContextSampleSerializer {
     }
 
     protected function normalizeStructuredValue($value) {
-        if(is_array($value)) return $value;
+        if($value === null || is_scalar($value)) return $value;
 
-        $json = json_encode($value);
-        if($json === false) return (string)$value;
+        if($value instanceof Page) {
+            return $this->serializePageReference($value);
+        }
 
-        $decoded = json_decode($json, true);
-        if(json_last_error() !== JSON_ERROR_NONE) return (string)$value;
+        if($value instanceof PageArray) {
+            return $this->serializePageReference($value);
+        }
 
-        return $decoded;
+        if(is_array($value)) {
+            $normalized = [];
+            foreach($value as $key => $item) {
+                $normalized[$key] = $this->normalizeStructuredValue($item);
+            }
+            return $normalized;
+        }
+
+        // FieldtypeCombo values expose their schema through getSubfields().
+        // json_encode() returns [] for these objects and silently loses data.
+        if(is_object($value) && method_exists($value, 'getSubfields') && method_exists($value, 'get')) {
+            $normalized = [];
+            foreach($value->getSubfields() as $subfield) {
+                $name = is_object($subfield) && isset($subfield->name)
+                    ? (string)$subfield->name
+                    : (string)$subfield;
+                if($name === '') continue;
+                $normalized[$name] = $this->normalizeStructuredValue($value->get($name));
+            }
+            return $normalized;
+        }
+
+        if($value instanceof \Traversable) {
+            $normalized = [];
+            foreach($value as $key => $item) {
+                $normalized[$key] = $this->normalizeStructuredValue($item);
+            }
+            return $normalized;
+        }
+
+        if(is_object($value) && method_exists($value, 'getArray')) {
+            return $this->normalizeStructuredValue($value->getArray());
+        }
+
+        if($value instanceof \JsonSerializable) {
+            return $this->normalizeStructuredValue($value->jsonSerialize());
+        }
+
+        $properties = is_object($value) ? get_object_vars($value) : [];
+        if($properties) return $this->normalizeStructuredValue($properties);
+
+        return method_exists($value, '__toString') ? (string)$value : null;
     }
 }

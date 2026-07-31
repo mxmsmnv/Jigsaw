@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.1 - 2026-07-30
+
+- Preserved FieldtypeCombo subfields and recursively normalized nested
+  ProcessWire values in Context content samples instead of exporting them as
+  empty arrays.
+
 ## 3.0.0 - 2026-07-30
 
 - Rebuilt Jigsaw as one super-module rather than a package that installs donor

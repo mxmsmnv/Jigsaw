@@ -21,6 +21,10 @@ feature controllers and services under `src/Features/`.
 - Field Audit — field and Repeater Matrix inventory
 - Context — AI-ready site exports, prompts, CLI and AI gateway
 
+Context samples preserve structured FieldtypeCombo, FieldtypeTable, page
+reference, and nested values so downstream editorial tooling receives the
+actual field data rather than an empty JSON object.
+
 The original repositories are source donors, not runtime dependencies or
 submodules. Their imported revisions are recorded in
 [`sources.lock.json`](sources.lock.json). Context continues here after its
