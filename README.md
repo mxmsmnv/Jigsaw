@@ -2,6 +2,8 @@
 
 ProcessWire operations and developer toolkit maintained by Maxim Semenov.
 
+![Jigsaw](assets/readme-doodle.png)
+
 Jigsaw is one ProcessWire module that combines a set of focused operational,
 site, access, and development tools. ProcessWire discovers and installs only
 `Jigsaw.module.php`; the donor projects have been refactored into internal
