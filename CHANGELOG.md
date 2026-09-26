@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.2 - 2026-09-26
+
+- Added MySQL, SQLite, and PostgreSQL support to DB Backup through ProcessWire's dialect-aware backup service.
+- Kept native MySQL command-line acceleration while removing direct MySQL PDO fallback connections.
+- Made full and partial restore, table inventory, and Context database metadata safe on translated database drivers.
+
 ## 3.0.1 - 2026-07-30
 
 - Preserved FieldtypeCombo subfields and recursively normalized nested

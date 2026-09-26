@@ -232,17 +232,21 @@ class JigsawContextMetadataExporter {
             return $b['count'] - $a['count'];
         });
 
-        $dbSize = 'N/A';
-        try {
-            $dbName = $this->module->config->dbName;
-            $result = $this->module->database->query("SELECT 
-                ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb 
-                FROM information_schema.TABLES 
-                WHERE table_schema = '{$dbName}'")->fetch();
-            $dbSize = $result['size_mb'] . ' MB';
-        } catch(\Exception $e) {
-            // Keep N/A when the database account cannot read information_schema.
-        }
+		$dbSize = 'N/A';
+		try {
+			$database = $this->module->database;
+			if(!method_exists($database, 'dialect') || $database->dialect()->name() === 'mysql') {
+				$stmt = $database->prepare("SELECT
+					ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
+					FROM information_schema.TABLES
+					WHERE table_schema = :schema");
+				$stmt->execute(['schema' => $this->module->config->dbName]);
+				$result = $stmt->fetch();
+				if(isset($result['size_mb'])) $dbSize = $result['size_mb'] . ' MB';
+			}
+		} catch(\Exception $e) {
+			// Keep N/A when the active database cannot report a comparable byte size.
+		}
 
         $performance = [
             'total_pages' => $totalPages,

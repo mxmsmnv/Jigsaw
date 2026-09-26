@@ -7,7 +7,7 @@
  * Supports local storage and Backblaze B2, manual and scheduled backups via LazyCron.
  *
  * @author Maxim Semenov <maxim@smnv.org> (smnv.org)
- * @version 2.2.1
+ * @version 2.3.0
  * @license MIT
  */
 class JigsawBackupFeature extends Process {
@@ -16,7 +16,7 @@ class JigsawBackupFeature extends Process {
 		return [
 			'title'    => 'DB Backup',
 			'summary'  => 'Database backup and restore with local and Backblaze B2 storage, backup types (regular/weekly/monthly), chunked upload, streaming restore.',
-			'version'  => 221,
+			'version'  => 230,
 			'author'   => 'Maxim Semenov',
 			'href'     => 'https://smnv.org',
 			'icon'     => 'database',
@@ -2124,8 +2124,9 @@ HTML;
 		$filename = $typePrefix . date('Y-m-d_His') . self::BACKUP_EXT;
 		$filepath = $dir . $filename;
 
-		// Try mysqldump first, fall back to PHP PDO
-		$result = $this->dumpViaMysqldump($filepath);
+		$result = $this->databaseType() === 'mysql'
+			? $this->dumpViaMysqldump($filepath)
+			: ['success' => false, 'error' => 'Native MySQL dump is not applicable'];
 		if (!$result['success']) {
 			$result = $this->dumpViaPdo($filepath);
 		}
@@ -2234,83 +2235,34 @@ HTML;
 	// ── PHP PDO fallback dump ─────────────────────────────────────────────────
 
 	protected function dumpViaPdo(string $filepath): array {
+		$temp = '';
 		try {
-			$cfg  = $this->wire('config');
-			$dsn  = "mysql:host={$cfg->dbHost};dbname={$cfg->dbName};charset={$cfg->dbCharset}";
-			$pdo  = new \PDO($dsn, $cfg->dbUser, $cfg->dbPass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-			$fh   = gzopen($filepath, 'wb9');
-			$bufferedQueryAttr = $this->getPdoMysqlUseBufferedQueryAttribute();
-
-			if (!$fh) return ['success' => false, 'error' => 'Cannot open output file.'];
-
-			gzwrite($fh, "-- ProcessWire DB Backup\n-- Generated: " . date('Y-m-d H:i:s') . "\n");
-			gzwrite($fh, "SET FOREIGN_KEY_CHECKS=0;\n\n");
-
-			// Get tables, minus excluded ones
-			$allTables = $pdo->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
-			$excluded  = [];
-			if ($this->exclude_tables) {
-				$excluded = array_filter(array_map('trim', explode("\n", $this->exclude_tables)));
+			$database = $this->wire('database');
+			if (!method_exists($database, 'backups')) return ['success' => false, 'error' => 'This database requires ProcessWire 3.0.273 or newer backup support.'];
+			$temp = $filepath . '.tmp.sql';
+			$core = $database->backups();
+			$core->setPath(dirname($temp) . '/');
+			$sqlFile = $core->backup(['filename' => basename($temp), 'excludeTables' => $this->getExcludedTables(), 'exec' => false]);
+			if (!$sqlFile) return ['success' => false, 'error' => 'ProcessWire backup error: ' . implode('; ', $core->errors())];
+			$source = fopen($sqlFile, 'rb');
+			$target = gzopen($filepath, 'wb9');
+			if (!$source || !$target) throw new \RuntimeException('Cannot open backup stream.');
+			while (!feof($source)) {
+				$chunk = fread($source, 1048576);
+				if ($chunk === false) throw new \RuntimeException('Cannot read temporary SQL backup.');
+				if ($chunk !== '') gzwrite($target, $chunk);
 			}
-			$tables = array_values(array_diff($allTables, $excluded));
-
-			foreach ($tables as $table) {
-				$escapedTable = '`' . str_replace('`', '``', $table) . '`';
-
-				// DROP + CREATE
-				gzwrite($fh, "DROP TABLE IF EXISTS {$escapedTable};\n");
-				$createRow = $pdo->query("SHOW CREATE TABLE {$escapedTable}")->fetch(\PDO::FETCH_NUM);
-				gzwrite($fh, $createRow[1] . ";\n\n");
-
-				// Data — unbuffered row-by-row to avoid loading entire table into memory
-				if ($bufferedQueryAttr !== null) {
-					$pdo->setAttribute($bufferedQueryAttr, false);
-				}
-				$stmt = $pdo->query("SELECT * FROM {$escapedTable}");
-				if ($bufferedQueryAttr !== null) {
-					$pdo->setAttribute($bufferedQueryAttr, true);
-				}
-				$firstRow  = true;
-				$batchVals = [];
-				$batchSize = 100;
-				$columns   = null;
-				while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-					if ($columns === null) {
-						$columns = '`' . implode('`, `', array_keys($row)) . '`';
-					}
-					$batchVals[] = '(' . implode(', ', array_map(
-						fn($v) => is_null($v) ? 'NULL' : $pdo->quote($v),
-						array_values($row)
-					)) . ')';
-					if (count($batchVals) >= $batchSize) {
-						if ($firstRow) { gzwrite($fh, "INSERT INTO {$escapedTable} ({$columns}) VALUES\n"); $firstRow = false; }
-						gzwrite($fh, implode(",\n", $batchVals) . ";\n");
-						$batchVals = [];
-					}
-				}
-				if ($batchVals && $columns) {
-					if ($firstRow) gzwrite($fh, "INSERT INTO {$escapedTable} ({$columns}) VALUES\n");
-					gzwrite($fh, implode(",\n", $batchVals) . ";\n\n");
-				} elseif (!$firstRow) {
-					gzwrite($fh, "\n");
-				}
-			}
-
-			gzwrite($fh, "SET FOREIGN_KEY_CHECKS=1;\n");
-			gzclose($fh);
-
-			return ['success' => true, 'method' => 'pdo'];
+			fclose($source);
+			gzclose($target);
+			@unlink($sqlFile);
+			return ['success' => true, 'method' => 'processwire-database'];
 
 		} catch (\Exception $e) {
-			// Re-enable buffered queries if exception during unbuffered fetch
-			try {
-				if (isset($bufferedQueryAttr) && $bufferedQueryAttr !== null && isset($pdo)) {
-					$pdo->setAttribute($bufferedQueryAttr, true);
-				}
-				if (isset($stmt)) $stmt->closeCursor();
-			} catch (\Throwable $ignored) {}
-			if (isset($fh) && $fh) gzclose($fh);
-			return ['success' => false, 'error' => 'PDO dump error: ' . $e->getMessage()];
+			if (isset($source) && is_resource($source)) fclose($source);
+			if (isset($target) && is_resource($target)) gzclose($target);
+			if ($temp !== '' && file_exists($temp)) @unlink($temp);
+			if (file_exists($filepath)) @unlink($filepath);
+			return ['success' => false, 'error' => 'Database dump error: ' . $e->getMessage()];
 		}
 	}
 
@@ -2344,8 +2296,9 @@ HTML;
 			}
 		}
 
-		// Try mysql CLI first
-		$result = $this->restoreViaMysql($filepath);
+		$result = $this->databaseType() === 'mysql'
+			? $this->restoreViaMysql($filepath)
+			: ['success' => false, 'error' => 'Native MySQL restore is not applicable'];
 		if (!$result['success']) {
 			$result = $this->restoreViaPdo($filepath);
 		}
@@ -2400,51 +2353,44 @@ HTML;
 
 	protected function restoreViaPdo(string $filepath): array {
 		set_time_limit(0); // Restore may take long on large databases
+		$temp = '';
 		try {
-			$cfg = $this->wire('config');
-			$dsn = "mysql:host={$cfg->dbHost};dbname={$cfg->dbName};charset={$cfg->dbCharset}";
-			$pdo = new \PDO($dsn, $cfg->dbUser, $cfg->dbPass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-
-			$fh = gzopen($filepath, 'rb');
-			if (!$fh) return ['success' => false, 'error' => 'Cannot open backup file.'];
-
-			$pdo->exec('SET FOREIGN_KEY_CHECKS=0');
-
-			// Stream line-by-line — avoids loading entire dump into memory
-			$stmt    = '';
-			while (!gzeof($fh)) {
-				$line = gzgets($fh, 1048576); // 1MB max line (handles large INSERT chunks)
-				if ($line === false) break;
-
-				$trimmed = ltrim($line);
-				// Skip empty lines and pure comments
-				if ($trimmed === '' || str_starts_with($trimmed, '-- ') || $trimmed === "--\n") continue;
-
-				$stmt .= $line;
-
-				// Execute when we hit a statement terminator at end of line
-				$rtrimmed = rtrim($line);
-				if (str_ends_with($rtrimmed, ';')) {
-					$execStmt = trim(rtrim($stmt, "\n\r"));
-					if ($execStmt !== '' && !str_starts_with(ltrim($execStmt), '--')) {
-						$pdo->exec($execStmt);
-					}
-					$stmt = '';
-				}
-			}
-			// Execute any remaining statement
-			if (($execStmt = trim($stmt)) !== '') $pdo->exec($execStmt);
-
-			gzclose($fh);
-			$pdo->exec('SET FOREIGN_KEY_CHECKS=1');
-
-			return ['success' => true, 'method' => 'pdo-stream'];
+			$temp = $this->inflateBackupToTemporarySql($filepath);
+			$core = $this->wire('database')->backups();
+			$core->setPath(dirname($temp) . '/');
+			$ok = $core->restore($temp, ['haltOnError' => true, 'exec' => false]);
+			@unlink($temp);
+			if (!$ok) return ['success' => false, 'error' => 'ProcessWire restore error: ' . implode('; ', $core->errors())];
+			return ['success' => true, 'method' => 'processwire-database'];
 
 		} catch (\Exception $e) {
-			if (isset($fh) && $fh) gzclose($fh);
-			try { if (isset($pdo)) $pdo->exec('SET FOREIGN_KEY_CHECKS=1'); } catch (\Throwable $ignored) {}
-			return ['success' => false, 'error' => 'PDO restore error: ' . $e->getMessage()];
+			if ($temp !== '' && file_exists($temp)) @unlink($temp);
+			return ['success' => false, 'error' => 'Database restore error: ' . $e->getMessage()];
 		}
+	}
+
+	protected function inflateBackupToTemporarySql(string $filepath): string {
+		$temp = $filepath . '.restore-' . bin2hex(random_bytes(6)) . '.sql';
+		$source = gzopen($filepath, 'rb');
+		$target = fopen($temp, 'wb');
+		if (!$source || !$target) throw new \RuntimeException('Cannot open restore stream.');
+		try {
+			while (!gzeof($source)) {
+				$chunk = gzread($source, 1048576);
+				if ($chunk === false) throw new \RuntimeException('Cannot read compressed backup.');
+				if ($chunk !== '' && fwrite($target, $chunk) === false) throw new \RuntimeException('Cannot write temporary restore file.');
+			}
+		} finally {
+			gzclose($source);
+			fclose($target);
+		}
+		return $temp;
+	}
+
+	protected function databaseType(): string {
+		$database = $this->wire('database');
+		if (method_exists($database, 'dialect')) return (string)$database->dialect()->name();
+		return strtolower((string)($this->wire('config')->dbType ?: 'mysql'));
 	}
 
 	protected function findCliBinary(string $name): string {
@@ -2462,17 +2408,6 @@ HTML;
 			'exitCode' => $exitCode,
 			'output'   => trim(implode("\n", $output)),
 		];
-	}
-
-	protected function getPdoMysqlUseBufferedQueryAttribute(): ?int {
-		if (defined('Pdo\\Mysql::ATTR_USE_BUFFERED_QUERY')) {
-			return constant('Pdo\\Mysql::ATTR_USE_BUFFERED_QUERY');
-		}
-		$legacyConstant = implode('::', ['PDO', 'MYSQL_ATTR_USE_BUFFERED_QUERY']);
-		if (defined($legacyConstant)) {
-			return constant($legacyConstant);
-		}
-		return null;
 	}
 
 	// ── Verify backup integrity ─────────────────────────────────────────────────
@@ -2567,77 +2502,31 @@ HTML;
 			if ($preResult['success']) $preBackup = $preResult['filename'];
 		}
 
-		// Read entire SQL from gzip — note: loads full dump into memory
-		// Acceptable for partial restore (needs full parse); ensure memory_limit is adequate
-		$fh  = gzopen($filepath, 'rb');
-		if (!$fh) return ['success' => false, 'error' => 'Cannot open backup file.'];
-		$sql = '';
-		while (!gzeof($fh)) $sql .= gzread($fh, 65536);
-		gzclose($fh);
-		if (empty($sql)) return ['success' => false, 'error' => 'Backup file is empty.'];
+		$available = array_flip($this->getBackupTables($filename));
+		$tables = array_values(array_unique(array_filter(array_map(
+			fn($table) => preg_replace('/[^a-zA-Z0-9_]/', '', (string)$table),
+			$tables
+		), fn($table) => $table !== '' && isset($available[$table]))));
+		if (!$tables) return ['success' => false, 'error' => 'No valid backup tables were selected.'];
 
-		// Parse SQL into per-table blocks
-		// Each block: DROP TABLE + CREATE TABLE + INSERT statements for that table
-		$tableBlocks = [];
-		$currentTable = null;
-		$currentBlock = '';
-
-		$statements = preg_split('/;[ \t]*\n/', $sql);
-		foreach ($statements as $stmt) {
-			$stmt = trim($stmt);
-			if (empty($stmt) || str_starts_with($stmt, '--')) continue;
-
-			if (preg_match('/^DROP TABLE.*`([^`]+)`/i', $stmt, $m)) {
-				$currentTable = $m[1];
-				$currentBlock = $stmt . ";\n";
-			} elseif (preg_match('/^CREATE TABLE `([^`]+)`/i', $stmt, $m)) {
-				$currentTable = $m[1];
-				$currentBlock .= $stmt . ";\n";
-				// Save immediately — table may be empty (no INSERT follows)
-				$tableBlocks[$currentTable] = $currentBlock;
-			} elseif (preg_match('/^INSERT INTO `([^`]+)`/i', $stmt, $m)) {
-				if ($m[1] === $currentTable) {
-					$currentBlock .= $stmt . ";\n";
-				}
-				if ($currentTable && !isset($tableBlocks[$currentTable])) {
-					$tableBlocks[$currentTable] = '';
-				}
-				$tableBlocks[$currentTable] = $currentBlock;
-			} elseif ($currentTable) {
-				$currentBlock .= $stmt . ";\n";
-				$tableBlocks[$currentTable] = $currentBlock;
-			}
-		}
-
-		// Execute only requested tables
+		$temp = '';
 		try {
-			$cfg = $this->wire('config');
-			$dsn = "mysql:host={$cfg->dbHost};dbname={$cfg->dbName};charset={$cfg->dbCharset}";
-			$pdo = new \PDO($dsn, $cfg->dbUser, $cfg->dbPass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-			$pdo->exec('SET FOREIGN_KEY_CHECKS=0');
-
-			$restored = [];
-			foreach ($tables as $tbl) {
-				if (!isset($tableBlocks[$tbl])) continue;
-				$stmts = preg_split('/;[ \t]*\n/', $tableBlocks[$tbl]);
-				foreach ($stmts as $s) {
-					$s = trim($s);
-					if ($s && !str_starts_with($s, '--')) $pdo->exec($s);
-				}
-				$restored[] = $tbl;
-			}
-
-			$pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+			$temp = $this->inflateBackupToTemporarySql($filepath);
+			$core = $this->wire('database')->backups();
+			$core->setPath(dirname($temp) . '/');
+			$ok = $core->restore($temp, ['tables' => $tables, 'haltOnError' => true, 'exec' => false]);
+			@unlink($temp);
+			if (!$ok) return ['success' => false, 'error' => 'ProcessWire restore error: ' . implode('; ', $core->errors())];
 
 			$this->log()->save(self::LOG_NAME,
-				"Partial restore from {$filename}: " . implode(', ', $restored)
+				"Partial restore from {$filename}: " . implode(', ', $tables)
 			);
 
-			return ['success' => true, 'restored_tables' => $restored, 'pre_backup' => $preBackup];
+			return ['success' => true, 'restored_tables' => $tables, 'pre_backup' => $preBackup];
 
 		} catch (\Exception $e) {
-			try { if (isset($pdo)) $pdo->exec('SET FOREIGN_KEY_CHECKS=1'); } catch (\Throwable $ignored) {}
-			return ['success' => false, 'error' => 'PDO error: ' . $e->getMessage()];
+			if ($temp !== '' && file_exists($temp)) @unlink($temp);
+			return ['success' => false, 'error' => 'Database restore error: ' . $e->getMessage()];
 		}
 	}
 
@@ -3074,10 +2963,17 @@ HTML;
 
 	protected function getTableSizeList(): array {
 		try {
-			$cfg = $this->wire('config');
-			$dsn = "mysql:host={$cfg->dbHost};dbname={$cfg->dbName};charset={$cfg->dbCharset}";
-			$pdo = new \PDO($dsn, $cfg->dbUser, $cfg->dbPass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-			$stmt = $pdo->prepare("
+			$database = $this->wire('database');
+			if ($this->databaseType() !== 'mysql') {
+				$rows = [];
+				foreach ($database->getTables(false) as $table) {
+					$escaped = $database->escapeTable($table);
+					$count = (int)$database->query("SELECT COUNT(*) FROM `{$escaped}`")->fetchColumn();
+					$rows[] = ['table_name' => $table, 'table_rows' => $count, 'data_length' => 0, 'index_length' => 0, 'total_length' => 0];
+				}
+				return $rows;
+			}
+			$stmt = $database->prepare("
 				SELECT
 					TABLE_NAME AS table_name,
 					COALESCE(TABLE_ROWS, 0) AS table_rows,
@@ -3088,7 +2984,7 @@ HTML;
 				WHERE TABLE_SCHEMA = :schema
 				ORDER BY total_length DESC, TABLE_NAME ASC
 			");
-			$stmt->execute(['schema' => $cfg->dbName]);
+			$stmt->execute(['schema' => $this->wire('config')->dbName]);
 			return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
 		} catch (\Throwable $e) {
 			$this->log()->save(self::LOG_NAME, 'Could not read table sizes: ' . $e->getMessage());
@@ -4649,11 +4545,8 @@ PHP;
 		$this->headline('Partial Restore: ' . $filename);
 
 		// Get current DB tables for comparison
-		$cfg = $this->wire('config');
 		try {
-			$dsn     = "mysql:host={$cfg->dbHost};dbname={$cfg->dbName};charset={$cfg->dbCharset}";
-			$pdo     = new \PDO($dsn, $cfg->dbUser, $cfg->dbPass);
-			$current = $pdo->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
+			$current = $this->wire('database')->getTables(false);
 		} catch (\Exception $e) {
 			$current = [];
 		}
